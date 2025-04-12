@@ -3,20 +3,38 @@
 @tailwind utilities;
 
 :root {
-  --background: oklch(97.9% 0.021 166.113);
   --foreground: #171717;
-  --container-width: 768px; /* iPad width */
+  --app-background: oklch(95% 0.052 163.051);
+  --nav-background: oklch(27.7% 0.046 192.524);
 }
 
 html, body {
   height: 100%;
-  background-color: var(--background);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: var(--app-background);
+  position: relative;
+  overscroll-behavior-y: none;
+}
+
+body {
+  overflow-x: hidden;
+  /* Lock the body to prevent scrolling under fixed elements on mobile */
+  min-height: 100vh;
+  /* mobile viewport fix */
+  min-height: -webkit-fill-available;
+}
+
+/* Fix for mobile Safari */
+html {
+  height: -webkit-fill-available;
 }
 
 @layer components {
   .container-tablet {
     width: 100%;
-    max-width: var(--container-width);
+    max-width: 768px;
     margin-left: auto;
     margin-right: auto;
   }
