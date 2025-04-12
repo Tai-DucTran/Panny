@@ -9,9 +9,13 @@ export default function GlobalStyleProvider({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <div
+      style={{
+        margin: "24px",
+      }}
+    >
       <GlobalStyle />
       {children}
-    </>
+    </div>
   );
 }
