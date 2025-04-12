@@ -1,5 +1,3 @@
-export default function ProfilePage() {
-    return (
-        <div>This is ProfilePage</div>
-    );
+export default function Profile() {
+  return <div>This is the profile page</div>;
 }
