@@ -12,6 +12,7 @@ export default function GlobalStyleProvider({
     <div
       style={{
         margin: "24px",
+        marginBottom: "88px",
       }}
     >
       <GlobalStyle />
