@@ -26,8 +26,8 @@ export const NavItem = styled(Link).withConfig({
   border: none;
   color: ${({ isSelected }) =>
     isSelected
-      ? theme.colors.palette.morningBlue
-      : theme.colors.palette.alabaster};
+      ? theme.colors.palette.alabaster
+      : theme.colors.palette.morningBlue};
   font-size: 14px;
   display: flex;
   flex-direction: column;
