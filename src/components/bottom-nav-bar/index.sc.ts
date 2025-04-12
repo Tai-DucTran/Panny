@@ -5,15 +5,17 @@ import Link from "next/link";
 export const NavWrapper = styled.nav`
   position: fixed;
   bottom: 0;
-  left: 0;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
   height: 64px;
   background-color: ${theme.colors.palette.darkCharcoal};
   border-top: 1px solid ${theme.colors.palette.alabaster};
   display: flex;
   justify-content: space-around;
   align-items: center;
-  z-index: 1000;
+  z-index: 50;
+  max-width: 768px;
 `;
 
 // Filter `isSelected` so it doesn't go to the DOM

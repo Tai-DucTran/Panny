@@ -26,11 +26,26 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <StyledComponentsRegistry>
-          <GlobalStyleProvider>{children}</GlobalStyleProvider>
-        </StyledComponentsRegistry>
-        <BottomNavBar />
+      <body
+        className={`${geistSans.variable} ${geistMono.variable}`}
+        style={{
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "768px",
+            minHeight: "100vh",
+            boxShadow: "0 0 20px rgba(0,0,0,0.1)",
+          }}
+        >
+          <StyledComponentsRegistry>
+            <GlobalStyleProvider>{children}</GlobalStyleProvider>
+          </StyledComponentsRegistry>
+          <BottomNavBar />
+        </div>
       </body>
     </html>
   );
