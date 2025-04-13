@@ -13,6 +13,7 @@ import StepOne, {
 } from "@/components/add-plant-form/step-one";
 import StepThree from "@/components/add-plant-form/step-three";
 import StepTwo from "@/components/add-plant-form/step-two";
+import SuccessDialog from "@/components/add-plant-form/success-dialog";
 import { usePlantInfo } from "@/hooks/fetching-data/use-plant-info";
 import {
   Plant,
@@ -24,6 +25,7 @@ import { useState } from "react";
 
 export default function AddedNewPlantForm() {
   const [currentStep, setCurrentStep] = useState(1);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [formData, setFormData] = useState<Partial<Plant>>({
     name: "",
     species: "",
@@ -123,6 +125,9 @@ export default function AddedNewPlantForm() {
 
   const onSubmit = (newPlant: Plant) => {
     console.log("DEBUG in creating new plant", newPlant);
+    // Here you would typically save the plant to your database or state
+    // For now, just show the success dialog
+    setShowSuccessDialog(true);
   };
 
   const handleBack = () => {
@@ -175,6 +180,12 @@ export default function AddedNewPlantForm() {
           {loading ? "Loading..." : currentStep === 3 ? "Add Plant" : "Next"}
         </StyledButton>
       </ButtonContainer>
+
+      {/* Success Dialog */}
+      <SuccessDialog
+        plantName={formData.name || "Your plant"}
+        isOpen={showSuccessDialog}
+      />
     </StyledFormContainer>
   );
 }

@@ -120,7 +120,9 @@ export const ButtonContainer = styled.div`
   margin-top: 2rem;
 `;
 
-export const StyledButton = styled.button<{ variant: "primary" | "secondary" }>`
+export const StyledButton = styled.button.withConfig({
+  shouldForwardProp: (prop) => prop !== "variant",
+})<{ variant: "primary" | "secondary" }>`
   padding: 0.75rem 1.5rem;
   border: none;
   border-radius: 4px;
@@ -176,4 +178,55 @@ export const StyledCheckbox = styled.input`
 
 export const CheckboxLabel = styled.label`
   font-size: 0.9rem;
+`;
+
+export const SuccessDialogOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+export const SuccessDialogContent = styled.div`
+  background-color: white;
+  padding: 2rem;
+  border-radius: 10px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  text-align: center;
+`;
+
+export const SuccessIcon = styled.div`
+  width: 70px;
+  height: 70px;
+  background-color: ${theme.colors.palette.darkCharcoal};
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 1.5rem;
+
+  svg {
+    width: 40px;
+    height: 40px;
+    color: white;
+  }
+`;
+
+export const SuccessTitle = styled.h2`
+  color: ${theme.colors.palette.darkCharcoal};
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
+`;
+
+export const SuccessMessage = styled.p`
+  font-size: 1.1rem;
+  color: #666;
 `;
