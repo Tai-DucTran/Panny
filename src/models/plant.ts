@@ -1,3 +1,6 @@
+// src/models/plant.ts
+import { Timestamp } from "firebase/firestore";
+
 export interface Plant {
   id: string;
   name: string;
@@ -15,7 +18,7 @@ export interface Plant {
 
   // Care requirements
   wateringFrequency: number;
-  lastWatered?: Date;
+  lastWatered?: Timestamp; // Changed from Date to Timestamp
   sunlightNeeds: SunlightLevel;
   humidityPreference: HumidityLevel;
   temperature: {
@@ -26,7 +29,7 @@ export interface Plant {
 
   // Soil information
   soilType: SoilType[];
-  lastRepotted?: Date;
+  lastRepotted?: Timestamp; // Changed from Date to Timestamp
   repottingFrequency: number;
 
   // Health tracking
@@ -89,7 +92,7 @@ export enum GrowthHabit {
 }
 
 export interface HealthRecord {
-  date: Date;
+  date: Timestamp; // Changed from Date to Timestamp
   status: HealthStatus;
   notes?: string;
   issues?: PlantIssue[];

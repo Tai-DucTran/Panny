@@ -22,6 +22,7 @@ import {
   HealthStatus,
 } from "@/models/plant";
 import { useState } from "react";
+import { Timestamp } from "firebase/firestore";
 
 export default function AddedNewPlantForm() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -39,7 +40,7 @@ export default function AddedNewPlantForm() {
     healthStatus: HealthStatus.GOOD,
     healthHistory: [
       {
-        date: new Date(),
+        date: Timestamp.now(), // Using Timestamp.now() instead of new Date()
         status: HealthStatus.GOOD,
       },
     ],
@@ -98,7 +99,7 @@ export default function AddedNewPlantForm() {
         careDifficulty: formData.careDifficulty!,
         sensitivityFactors: formData.sensitivityFactors || [],
         wateringFrequency: formData.wateringFrequency || 7,
-        lastWatered: formData.lastWatered,
+        lastWatered: formData.lastWatered, // Already using Timestamp
         sunlightNeeds: formData.sunlightNeeds!,
         humidityPreference: formData.humidityPreference!,
         temperature: formData.temperature || {
@@ -107,12 +108,12 @@ export default function AddedNewPlantForm() {
           ideal: 22,
         },
         soilType: formData.soilType || [],
-        lastRepotted: formData.lastRepotted,
+        lastRepotted: formData.lastRepotted, // Already using Timestamp
         repottingFrequency: formData.repottingFrequency || 12,
         healthStatus: formData.healthStatus || HealthStatus.GOOD,
         healthHistory: formData.healthHistory || [
           {
-            date: new Date(),
+            date: Timestamp.now(), // Using Timestamp.now instead of new Date()
             status: HealthStatus.GOOD,
           },
         ],

@@ -10,7 +10,13 @@ import {
   User as FirebaseUser,
 } from "firebase/auth";
 import { FirebaseError } from "firebase/app";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+  Timestamp,
+} from "firebase/firestore";
 import { auth, db } from "@/services/firebase/firebase-config";
 
 // Convert Firebase user to our User model
@@ -21,13 +27,16 @@ const convertFirebaseUserToUser = (firebaseUser: FirebaseUser): User => {
     displayName: firebaseUser.displayName,
     photoURL: firebaseUser.photoURL,
     isAnonymous: firebaseUser.isAnonymous,
-    createdAt: new Date(parseInt(firebaseUser.metadata.creationTime || "0")),
-    lastLoginAt: new Date(
+    // Convert creation time string to a number for timestamp creation
+    createdAt: Timestamp.fromMillis(
+      parseInt(firebaseUser.metadata.creationTime || "0")
+    ),
+    // Convert last sign-in time string to a number for timestamp creation
+    lastLoginAt: Timestamp.fromMillis(
       parseInt(firebaseUser.metadata.lastSignInTime || "0")
     ),
   };
 };
-
 // Check if user exists in Firestore and create if not
 const ensureUserInFirestore = async (
   firebaseUser: FirebaseUser

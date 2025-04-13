@@ -1,5 +1,5 @@
 import React from "react";
-
+import { Timestamp } from "firebase/firestore";
 import {
   StepContainer,
   FormGroup,
@@ -18,7 +18,12 @@ import {
   RepottingTimeOption,
   getRepottingDateFromOption,
   getTodayForDateInput,
+  getMonthsDifference,
 } from "./helpers";
+import {
+  formatTimestampForDateInput,
+  dateStringToTimestamp,
+} from "@/utils/timestamp-utils";
 
 interface StepThreeProps {
   formData: Partial<Plant>;
@@ -28,7 +33,9 @@ interface StepThreeProps {
 const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
   const handleLastWateredChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     updateFormData({
-      lastWatered: e.target.value ? new Date(e.target.value) : undefined,
+      lastWatered: e.target.value
+        ? dateStringToTimestamp(e.target.value)
+        : undefined,
     });
   };
 
@@ -67,7 +74,7 @@ const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
       imageUrl: imageUrl,
       healthHistory: [
         ...(formData.healthHistory || []),
-        { date: new Date(), status },
+        { date: Timestamp.now(), status },
       ],
     });
   };
@@ -79,10 +86,8 @@ const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
   const getSelectedRepottingOption = (): RepottingTimeOption => {
     if (!formData.lastRepotted) return RepottingTimeOption.NEVER;
 
-    const now = new Date();
-    const monthsDiff =
-      (now.getFullYear() - formData.lastRepotted.getFullYear()) * 12 +
-      (now.getMonth() - formData.lastRepotted.getMonth());
+    const now = Timestamp.now();
+    const monthsDiff = getMonthsDifference(formData.lastRepotted, now);
 
     if (monthsDiff < 1) return RepottingTimeOption.THIS_WEEK;
     if (monthsDiff < 2) return RepottingTimeOption.LAST_MONTH;
@@ -124,11 +129,7 @@ const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
           id="lastWatered"
           type="date"
           max={today}
-          value={
-            formData.lastWatered
-              ? new Date(formData.lastWatered).toISOString().substring(0, 10)
-              : ""
-          }
+          value={formatTimestampForDateInput(formData.lastWatered)}
           onChange={handleLastWateredChange}
         />
       </FormGroup>

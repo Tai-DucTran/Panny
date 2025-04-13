@@ -1,6 +1,7 @@
 // src/components/add-plant-form/helpers.ts
 
 import { HealthStatus } from "@/models/plant";
+import { Timestamp } from "firebase/firestore";
 
 // Function to set a random image based on health status
 export const getDefaultPlantImageURL = (
@@ -30,10 +31,10 @@ export enum RepottingTimeOption {
   NEVER = "never",
 }
 
-// Convert repotting option to actual Date
+// Convert repotting option to actual Timestamp
 export const getRepottingDateFromOption = (
   option: RepottingTimeOption
-): Date => {
+): Timestamp => {
   const now = new Date();
   let monthsToSubtract = 0;
 
@@ -72,10 +73,25 @@ export const getRepottingDateFromOption = (
   // Reset time to midnight
   targetDate.setHours(0, 0, 0, 0);
 
-  return targetDate;
+  // Convert to Timestamp
+  return Timestamp.fromDate(targetDate);
 };
 
 // Helper to get today's date in YYYY-MM-DD format for input[type="date"] max attribute
 export const getTodayForDateInput = (): string => {
   return new Date().toISOString().split("T")[0];
+};
+
+// Calculate months difference between two Timestamps
+export const getMonthsDifference = (
+  startTime: Timestamp,
+  endTime: Timestamp
+): number => {
+  const startDate = startTime.toDate();
+  const endDate = endTime.toDate();
+
+  return (
+    (endDate.getFullYear() - startDate.getFullYear()) * 12 +
+    (endDate.getMonth() - startDate.getMonth())
+  );
 };
