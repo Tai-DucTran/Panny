@@ -5,7 +5,7 @@ import styled from "styled-components";
 export const StyledFormContainer = styled.div`
   max-width: 600px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
   background-color: #fff;
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
