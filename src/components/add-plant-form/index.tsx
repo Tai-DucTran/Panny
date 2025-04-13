@@ -8,7 +8,9 @@ import {
   StyledButton,
   StyledFormContainer,
 } from "@/components/add-plant-form/index.sc";
-import StepOne from "@/components/add-plant-form/step-one";
+import StepOne, {
+  AcquiredTimeOption,
+} from "@/components/add-plant-form/step-one";
 import StepThree from "@/components/add-plant-form/step-three";
 import StepTwo from "@/components/add-plant-form/step-two";
 import { usePlantInfo } from "@/hooks/fetching-data/use-plant-info";
@@ -26,7 +28,7 @@ export default function AddedNewPlantForm() {
     name: "",
     species: "",
     nickname: "",
-    acquiredDate: new Date(),
+    acquiredTimeOption: AcquiredTimeOption.JUST_BOUGHT,
     location: {
       type: PlantLocationType.INDOOR,
       lightExposure: LightExposure.MEDIUM,
@@ -48,9 +50,10 @@ export default function AddedNewPlantForm() {
   };
 
   const fetchPlantDetails = async () => {
-    if (!formData.species) return;
+    if (!formData.name) return;
 
-    const response = await fetchPlantInfo(formData.species);
+    // Use the plant name to fetch species info from Gemini
+    const response = await fetchPlantInfo(formData.name);
 
     if (response) {
       setPlantDescription(response.description);
@@ -59,15 +62,16 @@ export default function AddedNewPlantForm() {
         ...response.plantData,
         // Keep user inputs
         name: formData.name,
-        species: formData.species,
+        species: response.plantData.species || formData.name, // Use Gemini's identified species or default to name
         nickname: formData.nickname,
         location: formData.location,
+        acquiredTimeOption: formData.acquiredTimeOption,
       });
     }
   };
 
   const handleNext = async () => {
-    if (currentStep === 1 && formData.species) {
+    if (currentStep === 1 && formData.name) {
       // Fetch plant data when moving from step 1 to step 2
       await fetchPlantDetails();
     }
@@ -79,9 +83,10 @@ export default function AddedNewPlantForm() {
       const newPlant: Plant = {
         id: Date.now().toString(),
         name: formData.name || "",
-        species: formData.species || "",
+        species: formData.species || formData.name || "",
         nickname: formData.nickname,
-        acquiredDate: formData.acquiredDate || new Date(),
+        acquiredTimeOption:
+          formData.acquiredTimeOption || AcquiredTimeOption.JUST_BOUGHT,
         location: formData.location || {
           type: PlantLocationType.INDOOR,
         },
@@ -164,7 +169,7 @@ export default function AddedNewPlantForm() {
         <StyledButton
           type="button"
           onClick={handleNext}
-          disabled={(currentStep === 1 && !formData.species) || loading}
+          disabled={(currentStep === 1 && !formData.name) || loading}
           variant="primary"
         >
           {loading ? "Loading..." : currentStep === 3 ? "Add Plant" : "Next"}

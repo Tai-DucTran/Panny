@@ -1,4 +1,3 @@
-// src/components/AddPlantForm/StepThree.tsx
 import React from "react";
 
 import {
@@ -13,7 +12,7 @@ import {
   StyledCheckbox,
   CheckboxLabel,
 } from "./index.sc";
-import { HumidityLevel, Plant, SoilType, SunlightLevel } from "@/models/plant";
+import { HealthStatus, Plant, SoilType } from "@/models/plant";
 
 interface StepThreeProps {
   formData: Partial<Plant>;
@@ -78,47 +77,6 @@ const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
       </FormGroup>
 
       <FormGroup>
-        <StyledLabel htmlFor="sunlightNeeds">
-          Sunlight requirements:
-        </StyledLabel>
-        <StyledSelect
-          id="sunlightNeeds"
-          value={formData.sunlightNeeds || SunlightLevel.MEDIUM}
-          onChange={(e) =>
-            updateFormData({
-              sunlightNeeds: e.target.value as SunlightLevel,
-            })
-          }
-        >
-          <option value={SunlightLevel.LOW}>Low Light</option>
-          <option value={SunlightLevel.MEDIUM}>Medium Light</option>
-          <option value={SunlightLevel.BRIGHT_INDIRECT}>
-            Bright Indirect Light
-          </option>
-          <option value={SunlightLevel.DIRECT}>Direct Sunlight</option>
-        </StyledSelect>
-      </FormGroup>
-
-      <FormGroup>
-        <StyledLabel htmlFor="humidityPreference">
-          Humidity requirements:
-        </StyledLabel>
-        <StyledSelect
-          id="humidityPreference"
-          value={formData.humidityPreference || HumidityLevel.MEDIUM}
-          onChange={(e) =>
-            updateFormData({
-              humidityPreference: e.target.value as HumidityLevel,
-            })
-          }
-        >
-          <option value={HumidityLevel.LOW}>Low (20-40%)</option>
-          <option value={HumidityLevel.MEDIUM}>Medium (40-60%)</option>
-          <option value={HumidityLevel.HIGH}>High (60%+)</option>
-        </StyledSelect>
-      </FormGroup>
-
-      <FormGroup>
         <StyledLabel>Soil type (select all that apply):</StyledLabel>
         <CheckboxGroup>
           {Object.values(SoilType).map((type) => (
@@ -135,6 +93,31 @@ const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
             </div>
           ))}
         </CheckboxGroup>
+      </FormGroup>
+
+      <FormGroup>
+        <StyledLabel htmlFor="healthStatus">
+          How healthy is your plant now?
+        </StyledLabel>
+        <StyledSelect
+          id="healthStatus"
+          value={formData.healthStatus || HealthStatus.GOOD}
+          onChange={(e) => {
+            const status = e.target.value as HealthStatus;
+            updateFormData({
+              healthStatus: status,
+              healthHistory: [
+                ...(formData.healthHistory || []),
+                { date: new Date(), status },
+              ],
+            });
+          }}
+        >
+          <option value={HealthStatus.EXCELLENT}>Excellent - Thriving</option>
+          <option value={HealthStatus.GOOD}>Good - Healthy</option>
+          <option value={HealthStatus.FAIR}>Fair - Some issues</option>
+          <option value={HealthStatus.POOR}>Poor - Struggling</option>
+        </StyledSelect>
       </FormGroup>
 
       <FormGroup>

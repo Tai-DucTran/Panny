@@ -4,7 +4,7 @@ export interface Plant {
   species: string;
   nickname?: string;
   imageUrl?: string;
-  acquiredDate: Date;
+  acquiredTimeOption: AcquiredTimeOption;
 
   // Care difficulty
   careDifficulty: CareDifficulty;
@@ -136,6 +136,8 @@ export interface PlantLocation {
   type: PlantLocationType;
   room?: string;
   lightExposure?: LightExposure;
+  city?: string;
+  country?: string;
 }
 
 export enum LightExposure {
@@ -143,4 +145,10 @@ export enum LightExposure {
   MEDIUM = "Medium light",
   BRIGHT = "Bright light",
   DIRECT_SUN = "Direct sunlight",
+}
+
+export enum AcquiredTimeOption {
+  JUST_BOUGHT = "just_bought",
+  LAST_WEEK = "last_week",
+  LONG_TIME_AGO = "long_time_ago",
 }

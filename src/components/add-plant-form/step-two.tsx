@@ -9,12 +9,7 @@ import {
   PlantDescription,
 } from "./index.sc";
 
-import {
-  HealthStatus,
-  LightExposure,
-  Plant,
-  PlantLocationType,
-} from "@/models/plant";
+import { LightExposure, Plant, PlantLocationType } from "@/models/plant";
 import { StyledInput } from "./index.sc";
 
 interface StepTwoProps {
@@ -69,6 +64,7 @@ const StepTwo: React.FC<StepTwoProps> = ({
           onChange={(e) =>
             updateFormData({
               location: {
+                type: formData.location?.type || PlantLocationType.INDOOR,
                 ...formData.location,
                 room: e.target.value,
               },
@@ -88,6 +84,7 @@ const StepTwo: React.FC<StepTwoProps> = ({
           onChange={(e) =>
             updateFormData({
               location: {
+                type: formData.location?.type || PlantLocationType.INDOOR,
                 ...formData.location,
                 lightExposure: e.target.value as LightExposure,
               },
@@ -102,28 +99,41 @@ const StepTwo: React.FC<StepTwoProps> = ({
       </FormGroup>
 
       <FormGroup>
-        <StyledLabel htmlFor="healthStatus">
-          How healthy is your plant now?
-        </StyledLabel>
-        <StyledSelect
-          id="healthStatus"
-          value={formData.healthStatus || HealthStatus.GOOD}
-          onChange={(e) => {
-            const status = e.target.value as HealthStatus;
+        <StyledLabel htmlFor="city">Your City</StyledLabel>
+        <StyledInput
+          id="city"
+          type="text"
+          value={formData.location?.city || ""}
+          onChange={(e) =>
             updateFormData({
-              healthStatus: status,
-              healthHistory: [
-                ...(formData.healthHistory || []),
-                { date: new Date(), status },
-              ],
-            });
-          }}
-        >
-          <option value={HealthStatus.EXCELLENT}>Excellent - Thriving</option>
-          <option value={HealthStatus.GOOD}>Good - Healthy</option>
-          <option value={HealthStatus.FAIR}>Fair - Some issues</option>
-          <option value={HealthStatus.POOR}>Poor - Struggling</option>
-        </StyledSelect>
+              location: {
+                type: formData.location?.type || PlantLocationType.INDOOR,
+                ...formData.location,
+                city: e.target.value,
+              },
+            })
+          }
+          placeholder="e.g., New York"
+        />
+      </FormGroup>
+
+      <FormGroup>
+        <StyledLabel htmlFor="country">Your Country</StyledLabel>
+        <StyledInput
+          id="country"
+          type="text"
+          value={formData.location?.country || ""}
+          onChange={(e) =>
+            updateFormData({
+              location: {
+                type: formData.location?.type || PlantLocationType.INDOOR,
+                ...formData.location,
+                country: e.target.value,
+              },
+            })
+          }
+          placeholder="e.g., United States"
+        />
       </FormGroup>
     </StepContainer>
   );
