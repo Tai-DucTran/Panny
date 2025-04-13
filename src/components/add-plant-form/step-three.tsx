@@ -13,6 +13,7 @@ import {
   CheckboxLabel,
 } from "./index.sc";
 import { HealthStatus, Plant, SoilType } from "@/models/plant";
+import { getDefaultPlantImageURL } from "./helpers";
 
 interface StepThreeProps {
   formData: Partial<Plant>;
@@ -36,6 +37,22 @@ const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
     }
 
     updateFormData({ soilType: updatedSoilTypes });
+  };
+
+  // Function to set a random image based on health status
+  const handleHealthStatusChange = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    const status = e.target.value as HealthStatus;
+    const imageUrl = getDefaultPlantImageURL(e);
+    updateFormData({
+      healthStatus: status,
+      imageUrl: imageUrl,
+      healthHistory: [
+        ...(formData.healthHistory || []),
+        { date: new Date(), status },
+      ],
+    });
   };
 
   return (
@@ -102,16 +119,7 @@ const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
         <StyledSelect
           id="healthStatus"
           value={formData.healthStatus || HealthStatus.GOOD}
-          onChange={(e) => {
-            const status = e.target.value as HealthStatus;
-            updateFormData({
-              healthStatus: status,
-              healthHistory: [
-                ...(formData.healthHistory || []),
-                { date: new Date(), status },
-              ],
-            });
-          }}
+          onChange={handleHealthStatusChange}
         >
           <option value={HealthStatus.EXCELLENT}>Excellent - Thriving</option>
           <option value={HealthStatus.GOOD}>Good - Healthy</option>

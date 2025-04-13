@@ -30,6 +30,7 @@ export default function AddedNewPlantForm() {
     name: "",
     species: "",
     nickname: "",
+    imageUrl: "",
     acquiredTimeOption: AcquiredTimeOption.JUST_BOUGHT,
     location: {
       type: PlantLocationType.INDOOR,
@@ -66,6 +67,7 @@ export default function AddedNewPlantForm() {
         name: formData.name,
         species: response.plantData.species || formData.name, // Use Gemini's identified species or default to name
         nickname: formData.nickname,
+        imageUrl: formData.imageUrl,
         location: formData.location,
         acquiredTimeOption: formData.acquiredTimeOption,
       });
@@ -87,6 +89,7 @@ export default function AddedNewPlantForm() {
         name: formData.name || "",
         species: formData.species || formData.name || "",
         nickname: formData.nickname,
+        imageUrl: formData.imageUrl,
         acquiredTimeOption:
           formData.acquiredTimeOption || AcquiredTimeOption.JUST_BOUGHT,
         location: formData.location || {
