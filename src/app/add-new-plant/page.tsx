@@ -1,9 +1,9 @@
-import SearchPlantContainer from "@/components/search-plant-container";
+import AddedNewPlantForm from "@/components/add-plant-form";
 
 export default function AddedNewPlant() {
   return (
-    <div className="container mx-auto p-4 max-w-xl">
-      <SearchPlantContainer />
+    <div>
+      <AddedNewPlantForm />
     </div>
   );
 }
