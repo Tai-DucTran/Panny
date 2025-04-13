@@ -97,7 +97,7 @@ export class GeminiService {
       "origin": geographic origin of the plant
     }
 
-    Only include fields where you have high confidence in the information. Do NOT use markdown formatting such as code blocks in your response. Return the human-readable description followed by the JSON object, with the JSON clearly delimited.
+    Only include fields where you have high confidence in the information. Return the human-readable description followed by the JSON object, with the JSON clearly delimited.
     Format your response exactly like this:
     <description>
     [Plant description here]
@@ -121,7 +121,13 @@ export class GeminiService {
 
     if (plantDataMatch) {
       try {
-        plantData = JSON.parse(plantDataMatch[1].trim());
+        // Clean the JSON string before parsing
+        let jsonString = plantDataMatch[1].trim();
+
+        // Remove markdown code blocks if present
+        jsonString = jsonString.replace(/```json|```/g, "").trim();
+
+        plantData = JSON.parse(jsonString);
       } catch (error) {
         console.error("Error parsing plant data JSON:", error);
       }
