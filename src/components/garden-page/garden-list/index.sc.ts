@@ -1,3 +1,4 @@
+import { theme } from "@/styles/theme";
 import { styled } from "styled-components";
 
 export const ListOfItems = styled.div`
@@ -36,7 +37,7 @@ export const EmptyMessage = styled.p`
 
 export const AddPlantButton = styled.div`
   display: inline-block;
-  background-color: #2e7d32;
+  background-color: ${theme.colors.palette.russianGreen};
   color: white;
   padding: 0.75rem 1.5rem;
   border-radius: 4px;
@@ -46,6 +47,6 @@ export const AddPlantButton = styled.div`
   transition: background-color 0.2s;
 
   &:hover {
-    background-color: #1b5e20;
+    background-color: ${theme.colors.palette.darkCharcoal};
   }
 `;
