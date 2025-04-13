@@ -74,7 +74,7 @@ export class GeminiService {
     return `
     I need detailed information about ${plantSpecies} houseplant for my plant care app. Please provide:
 
-    1. A detailed but concise human-readable description of the plant, its characteristics, care needs, and any special considerations.
+    1. A detailed but concise human-readable description of the plant, its characteristics, care needs, illness, diagnosis and any special considerations.
 
     2. A JSON object that conforms to my Plant interface with the following structure:
     
