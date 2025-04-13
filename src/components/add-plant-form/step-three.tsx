@@ -13,7 +13,12 @@ import {
   CheckboxLabel,
 } from "./index.sc";
 import { HealthStatus, Plant, SoilType } from "@/models/plant";
-import { getDefaultPlantImageURL } from "./helpers";
+import {
+  getDefaultPlantImageURL,
+  RepottingTimeOption,
+  getRepottingDateFromOption,
+  getTodayForDateInput,
+} from "./helpers";
 
 interface StepThreeProps {
   formData: Partial<Plant>;
@@ -39,6 +44,18 @@ const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
     updateFormData({ soilType: updatedSoilTypes });
   };
 
+  // Handle repotting time option changes - only update lastRepotted
+  const handleRepottingTimeChange = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    const option = e.target.value as RepottingTimeOption;
+    const repottingDate = getRepottingDateFromOption(option);
+
+    updateFormData({
+      lastRepotted: repottingDate,
+    });
+  };
+
   // Function to set a random image based on health status
   const handleHealthStatusChange = (
     e: React.ChangeEvent<HTMLSelectElement>
@@ -54,6 +71,28 @@ const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
       ],
     });
   };
+
+  // Get today's date for input max attribute
+  const today = getTodayForDateInput();
+
+  // Find the closest repotting option based on lastRepotted date, for the dropdown default value
+  const getSelectedRepottingOption = (): RepottingTimeOption => {
+    if (!formData.lastRepotted) return RepottingTimeOption.NEVER;
+
+    const now = new Date();
+    const monthsDiff =
+      (now.getFullYear() - formData.lastRepotted.getFullYear()) * 12 +
+      (now.getMonth() - formData.lastRepotted.getMonth());
+
+    if (monthsDiff < 1) return RepottingTimeOption.THIS_WEEK;
+    if (monthsDiff < 2) return RepottingTimeOption.LAST_MONTH;
+    if (monthsDiff < 4) return RepottingTimeOption.THREE_MONTHS_AGO;
+    if (monthsDiff < 9) return RepottingTimeOption.SIX_MONTHS_AGO;
+    if (monthsDiff < 15) return RepottingTimeOption.TWELVE_MONTHS_AGO;
+    return RepottingTimeOption.NEVER;
+  };
+
+  const selectedRepottingOption = getSelectedRepottingOption();
 
   return (
     <StepContainer>
@@ -84,6 +123,7 @@ const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
         <StyledInput
           id="lastWatered"
           type="date"
+          max={today}
           value={
             formData.lastWatered
               ? new Date(formData.lastWatered).toISOString().substring(0, 10)
@@ -110,6 +150,34 @@ const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
             </div>
           ))}
         </CheckboxGroup>
+      </FormGroup>
+
+      <FormGroup>
+        <StyledLabel htmlFor="repottingTime">
+          When was the last time you repotted this plant?
+        </StyledLabel>
+        <StyledSelect
+          id="repottingTime"
+          value={selectedRepottingOption}
+          onChange={handleRepottingTimeChange}
+        >
+          <option value={RepottingTimeOption.THIS_WEEK}>
+            {`I've repotted it this week`}
+          </option>
+          <option value={RepottingTimeOption.LAST_MONTH}>Last month</option>
+          <option value={RepottingTimeOption.THREE_MONTHS_AGO}>
+            3 months ago
+          </option>
+          <option value={RepottingTimeOption.SIX_MONTHS_AGO}>
+            6 months ago
+          </option>
+          <option value={RepottingTimeOption.TWELVE_MONTHS_AGO}>
+            12 months ago
+          </option>
+          <option value={RepottingTimeOption.NEVER}>
+            I never did that within the last 12 months
+          </option>
+        </StyledSelect>
       </FormGroup>
 
       <FormGroup>
