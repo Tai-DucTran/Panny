@@ -3,6 +3,7 @@ import { Inter, Roboto_Mono } from "next/font/google";
 import StyledComponentsRegistry from "./registry";
 import GlobalStyleProvider from "@/components/global-style-provider";
 import BottomNavBar from "@/components/bottom-nav-bar";
+import ProtectedRoute from "@/components/auth/protected-route";
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -42,7 +43,9 @@ export default function RootLayout({
           }}
         >
           <StyledComponentsRegistry>
-            <GlobalStyleProvider>{children}</GlobalStyleProvider>
+            <GlobalStyleProvider>
+              <ProtectedRoute>{children}</ProtectedRoute>
+            </GlobalStyleProvider>
           </StyledComponentsRegistry>
           <BottomNavBar />
         </div>
