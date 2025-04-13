@@ -1,11 +1,7 @@
+import { Plant } from "@/models/plant";
 import Image from "next/image";
 
-interface Plant {
-  name: string;
-  imageUrl: string;
-  healthCondition: string;
-  waterNeed: string;
-}
+const defaultImageUrl = "/images/plants/normal-plants/plant-1.jpg";
 
 export const PlantCard = ({ plant }: { plant: Plant }) => {
   return (
@@ -27,7 +23,7 @@ export const PlantCard = ({ plant }: { plant: Plant }) => {
         }}
       >
         <Image
-          src={plant.imageUrl}
+          src={plant.imageUrl ?? defaultImageUrl}
           alt={plant.name}
           fill
           sizes="300px"
@@ -42,7 +38,7 @@ export const PlantCard = ({ plant }: { plant: Plant }) => {
       <div style={{ padding: "16px" }}>
         <h3 style={{ margin: "0 0 8px 0" }}>{plant.name}</h3>
 
-        <div style={{ marginBottom: "8px" }}>
+        {/* <div style={{ marginBottom: "8px" }}>
           <span style={{ fontWeight: "bold", marginRight: "8px" }}>
             Health:
           </span>
@@ -54,7 +50,7 @@ export const PlantCard = ({ plant }: { plant: Plant }) => {
             Water need:
           </span>
           <span>{plant.waterNeed}</span>
-        </div>
+        </div> */}
       </div>
     </div>
   );
