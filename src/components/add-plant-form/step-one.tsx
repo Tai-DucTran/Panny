@@ -21,18 +21,6 @@ const StepOne: React.FC<StepOneProps> = ({ formData, updateFormData }) => {
       <StepTitle>General Information</StepTitle>
 
       <FormGroup>
-        <StyledLabel htmlFor="species">Species (Scientific Name)*</StyledLabel>
-        <StyledInput
-          id="species"
-          type="text"
-          value={formData.species || ""}
-          onChange={(e) => updateFormData({ species: e.target.value })}
-          placeholder="e.g., Monstera deliciosa"
-          required
-        />
-      </FormGroup>
-
-      <FormGroup>
         <StyledLabel htmlFor="name">Common Name*</StyledLabel>
         <StyledInput
           id="name"
@@ -41,17 +29,6 @@ const StepOne: React.FC<StepOneProps> = ({ formData, updateFormData }) => {
           onChange={(e) => updateFormData({ name: e.target.value })}
           placeholder="e.g., Swiss Cheese Plant"
           required
-        />
-      </FormGroup>
-
-      <FormGroup>
-        <StyledLabel htmlFor="nickname">Nickname (optional)</StyledLabel>
-        <StyledInput
-          id="nickname"
-          type="text"
-          value={formData.nickname || ""}
-          onChange={(e) => updateFormData({ nickname: e.target.value })}
-          placeholder="Give your plant a personal name"
         />
       </FormGroup>
 
