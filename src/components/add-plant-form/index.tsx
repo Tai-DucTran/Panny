@@ -116,6 +116,10 @@ export default function AddedNewPlantForm() {
     }
   };
 
+  const onSubmit = (newPlant: Plant) => {
+    console.log("DEBUG in creating new plant", newPlant);
+  };
+
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
