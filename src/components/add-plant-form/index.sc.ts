@@ -52,7 +52,7 @@ export const StepConnector = styled.div.withConfig({
 `;
 
 export const StepContainer = styled.div`
-  min-height: 300px;
+  min-height: 200px;
 `;
 
 export const StepTitle = styled.h2`
