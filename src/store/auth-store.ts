@@ -33,6 +33,11 @@ const ensureUserInFirestore = async (
   firebaseUser: FirebaseUser
 ): Promise<void> => {
   try {
+    if (!db) {
+      console.error("Firestore not initialized");
+      return;
+    }
+
     const userRef = doc(db, "users", firebaseUser.uid);
     const docSnap = await getDoc(userRef);
 
@@ -82,9 +87,10 @@ interface AuthState {
   signInAnonymously: () => Promise<void>;
   signOut: () => Promise<void>;
   clearError: () => void;
+  initializeAuthListener: () => () => void; // Returns unsubscribe function
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   loading: true,
   error: null,
@@ -99,7 +105,9 @@ export const useAuthStore = create<AuthState>((set) => ({
         password
       );
       // Don't await this - we'll handle it separately to prevent blocking auth flow
-      ensureUserInFirestore(userCredential.user);
+      ensureUserInFirestore(userCredential.user).catch((error) => {
+        console.error("Error ensuring user in Firestore after signup:", error);
+      });
       set({ user: convertFirebaseUserToUser(userCredential.user) });
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error);
@@ -120,7 +128,9 @@ export const useAuthStore = create<AuthState>((set) => ({
         password
       );
       // Don't await this - we'll handle it separately to prevent blocking auth flow
-      ensureUserInFirestore(userCredential.user);
+      ensureUserInFirestore(userCredential.user).catch((error) => {
+        console.error("Error ensuring user in Firestore after signin:", error);
+      });
       set({ user: convertFirebaseUserToUser(userCredential.user) });
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error);
@@ -137,7 +147,12 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ loading: true, error: null });
       const userCredential = await firebaseSignInAnonymously(auth);
       // Don't await this - we'll handle it separately to prevent blocking auth flow
-      ensureUserInFirestore(userCredential.user);
+      ensureUserInFirestore(userCredential.user).catch((error) => {
+        console.error(
+          "Error ensuring user in Firestore after anonymous signin:",
+          error
+        );
+      });
       set({ user: convertFirebaseUserToUser(userCredential.user) });
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error);
@@ -165,25 +180,77 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   clearError: () => set({ error: null }),
+
+  // New method to initialize auth state listener
+  initializeAuthListener: () => {
+    if (typeof window === "undefined") {
+      console.warn("Auth listener not initialized: Running on server");
+      return () => {}; // Return empty function for SSR
+    }
+
+    // Check if we're already initialized to prevent duplicate listeners
+    if (get().initialized) {
+      console.log("Auth listener already initialized");
+      return () => {}; // Return empty function if already initialized
+    }
+
+    // Set up the auth state listener
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        set({
+          user: convertFirebaseUserToUser(firebaseUser),
+          loading: false,
+          initialized: true,
+        });
+        // Handle Firestore updates separately to avoid blocking auth flow
+        ensureUserInFirestore(firebaseUser).catch((error) => {
+          console.error(
+            "Error ensuring user in Firestore from auth state change:",
+            error
+          );
+        });
+      } else {
+        set({
+          user: null,
+          loading: false,
+          initialized: true,
+        });
+      }
+    });
+
+    // Return the unsubscribe function to allow manual cleanup
+    return unsubscribe;
+  },
 }));
 
-// Initialize auth state listener
+// Initialize auth state listener only on the client side
+let unsubscribeAuthListener: (() => void) | null = null;
+
 if (typeof window !== "undefined") {
-  onAuthStateChanged(auth, (firebaseUser) => {
-    if (firebaseUser) {
-      useAuthStore.setState({
-        user: convertFirebaseUserToUser(firebaseUser),
-        loading: false,
-        initialized: true,
-      });
-      // Handle Firestore updates separately to avoid blocking auth flow
-      ensureUserInFirestore(firebaseUser);
-    } else {
-      useAuthStore.setState({
-        user: null,
-        loading: false,
-        initialized: true,
+  // Initialize the auth listener when the file loads
+  unsubscribeAuthListener = useAuthStore.getState().initializeAuthListener();
+
+  // Safe check for HMR without TypeScript errors
+  if (typeof module !== "undefined") {
+    // Use type assertion to avoid TypeScript errors
+    const moduleWithHot = module as {
+      hot?: { dispose: (callback: () => void) => void };
+    };
+    if (moduleWithHot.hot) {
+      moduleWithHot.hot.dispose(() => {
+        if (unsubscribeAuthListener) {
+          unsubscribeAuthListener();
+          unsubscribeAuthListener = null;
+        }
       });
     }
-  });
+  }
 }
+
+// Export the unsubscribe function if needed elsewhere
+export const cleanupAuthListener = () => {
+  if (unsubscribeAuthListener) {
+    unsubscribeAuthListener();
+    unsubscribeAuthListener = null;
+  }
+};
