@@ -31,7 +31,8 @@ export const StepDot = styled.div.withConfig({
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background-color: ${({ active }) => (active ? "#2e7d32" : "#e0e0e0")};
+  background-color: ${({ active }) =>
+    active ? theme.colors.palette.morningBlue : "#e0e0e0"};
   color: ${({ active }) => (active ? "white" : "#757575")};
   display: flex;
   justify-content: center;
@@ -45,7 +46,8 @@ export const StepConnector = styled.div.withConfig({
 })<{ active: boolean }>`
   width: 60px;
   height: 3px;
-  background-color: ${({ active }) => (active ? "#2e7d32" : "#e0e0e0")};
+  background-color: ${({ active }) =>
+    active ? theme.colors.palette.morningBlue : "#e0e0e0"};
   transition: all 0.3s ease;
 `;
 
@@ -109,8 +111,8 @@ export const StyledTextarea = styled.textarea`
 
   &:focus {
     outline: none;
-    border-color: #2e7d32;
-    box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.2);
+    border-color: ${theme.colors.palette.darkCharcoal};
+    box-shadow: 0 0 0 2px rgba(20, 80, 23, 0.2);
   }
 `;
 
@@ -153,7 +155,7 @@ export const PlantDescription = styled.div`
   padding: 1rem;
   border-radius: 4px;
   margin-bottom: 1.5rem;
-  border-left: 4px solid #7cb342;
+  border-left: 4px solid ${theme.colors.palette.morningBlue};
 
   h4 {
     margin-top: 0;
