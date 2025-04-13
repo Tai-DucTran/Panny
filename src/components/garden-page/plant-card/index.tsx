@@ -36,6 +36,7 @@ export const PlantCard = ({ plant }: { plant: Plant }) => {
             objectPosition: "center",
           }}
           priority={false}
+          loading={"lazy"}
         />
       </div>
       <div style={{ padding: "16px" }}>
