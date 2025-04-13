@@ -2,6 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getVertexAI, getGenerativeModel } from "firebase/vertexai";
 import "dotenv/config";
+import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -22,3 +23,6 @@ const vertexAI = getVertexAI(firebaseApp);
 export const geminiModel = getGenerativeModel(vertexAI, {
   model: "gemini-2.0-flash",
 });
+
+// Initialize Firestore
+export const db = getFirestore(firebaseApp);
