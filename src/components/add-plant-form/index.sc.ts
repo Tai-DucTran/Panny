@@ -31,8 +31,8 @@ export const StepDot = styled.div.withConfig({
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background-color: ${(active) => (active ? "#2e7d32" : "#e0e0e0")};
-  color: ${(active) => (active ? "white" : "#757575")};
+  background-color: ${({ active }) => (active ? "#2e7d32" : "#e0e0e0")};
+  color: ${({ active }) => (active ? "white" : "#757575")};
   display: flex;
   justify-content: center;
   align-items: center;
@@ -45,7 +45,7 @@ export const StepConnector = styled.div.withConfig({
 })<{ active: boolean }>`
   width: 60px;
   height: 3px;
-  background-color: ${(active) => (active ? "#2e7d32" : "#e0e0e0")};
+  background-color: ${({ active }) => (active ? "#2e7d32" : "#e0e0e0")};
   transition: all 0.3s ease;
 `;
 
