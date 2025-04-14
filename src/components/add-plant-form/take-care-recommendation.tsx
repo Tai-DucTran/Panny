@@ -1,11 +1,14 @@
 // src/components/add-plant-form/take-care-recommendation.tsx
-import React from "react";
+import React, { useState } from "react";
 import {
   RecommendationContainer,
   RecommendationTitle,
   RecommendationContent,
   LoadingRecommendation,
   StatusBadge,
+  CollapsedMarkdownContent,
+  MarkdownContent,
+  ExpandableButton,
 } from "./take-care-recommendation.sc";
 import { LoadingSpinner } from "@/components/spinner";
 import { HealthStatus } from "@/models/plant";
@@ -13,14 +16,14 @@ import ReactMarkdown from "react-markdown";
 
 interface TakeCareRecommendationProps {
   healthStatus: HealthStatus;
-  diagnosis: string; // This prop will receive the diagnosis from parent
+  diagnosis: string;
 }
 
 const TakeCareRecommendation: React.FC<TakeCareRecommendationProps> = ({
   healthStatus,
-  diagnosis, // Accept the diagnosis from props
+  diagnosis,
 }) => {
-  // Loading state - true if diagnosis is empty
+  const [expanded, setExpanded] = useState(false);
   const loading = !diagnosis;
 
   // Function to get health status display text
@@ -66,15 +69,20 @@ const TakeCareRecommendation: React.FC<TakeCareRecommendationProps> = ({
           <LoadingSpinner size="small" />
           <span>Getting care recommendations...</span>
         </LoadingRecommendation>
-      ) : !diagnosis ? (
-        <RecommendationContent>
-          <p>
-            Unable to provide diagnosis at this time. Please try again later.
-          </p>
-        </RecommendationContent>
       ) : (
         <RecommendationContent>
-          <ReactMarkdown>{diagnosis}</ReactMarkdown>
+          {expanded ? (
+            <MarkdownContent>
+              <ReactMarkdown>{diagnosis}</ReactMarkdown>
+            </MarkdownContent>
+          ) : (
+            <CollapsedMarkdownContent>
+              <ReactMarkdown>{diagnosis}</ReactMarkdown>
+            </CollapsedMarkdownContent>
+          )}
+          <ExpandableButton onClick={() => setExpanded(!expanded)}>
+            {expanded ? "Show Less" : "Read More"}
+          </ExpandableButton>
         </RecommendationContent>
       )}
     </RecommendationContainer>
