@@ -71,9 +71,7 @@ export const HealthStatusBadge = styled.span.withConfig({
   color: white;
 `;
 
-export const DetailsSection = styled.section`
-  border-bottom: 1px solid #eaeaea;
-`;
+export const DetailsSection = styled.section``;
 
 export const SectionTitle = styled.h2`
   font-size: 1.1rem;

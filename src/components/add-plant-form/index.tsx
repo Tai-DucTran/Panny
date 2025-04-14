@@ -129,6 +129,8 @@ export default function AddedNewPlantForm() {
         toxicity: formData.toxicity,
         growthHabit: formData.growthHabit,
         origin: formData.origin || "",
+        plantCharacteristicDescription:
+          formData.plantCharacteristicDescription || "",
       };
 
       // Add plant to Firestore via our Zustand store

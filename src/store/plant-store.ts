@@ -116,22 +116,19 @@ export const usePlantStore = create<PlantState>((set, get) => ({
         plantWithUserId // Pass the complete object
       );
 
-      // We need to get the actual server timestamp after adding
-      // For simplicity here, we'll return the data as passed, but ideally,
-      // you'd fetch the created doc or handle the timestamp locally if needed immediately.
+      // Return the plant with ID
       const newPlant: Plant = {
         ...plantData,
         id: docRef.id,
         userId: currentUser.uid,
-        // Note: createdAt/updatedAt here are placeholders until fetched or handled
-        createdAt: Timestamp.now(), // Example placeholder
-        updatedAt: Timestamp.now(), // Example placeholder
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
 
-      // Update the store with the new plant
+      // Update the store
       const currentPlants = get().plants;
       set({
-        plants: [newPlant, ...currentPlants], // Add to the beginning
+        plants: [newPlant, ...currentPlants],
         isLoading: false,
       });
 

@@ -57,6 +57,12 @@ const PlantInfoView: React.FC<PlantInfoViewProps> = ({
       if (response) {
         setPlantDescription(response.description);
 
+        updateFormData({
+          ...response.plantData,
+          plantCharacteristicDescription: response.description,
+          name: formData.name,
+        });
+
         // Calculate lastRepotted date for newly purchased plants
         let lastRepottedDate;
         if (

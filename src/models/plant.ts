@@ -9,6 +9,8 @@ export interface Plant {
   imageUrl?: string;
   acquiredTimeOption: AcquiredTimeOption;
 
+  plantCharacteristicDescription?: string;
+
   // Care difficulty
   careDifficulty: CareDifficulty;
   sensitivityFactors?: SensitivityFactor[];

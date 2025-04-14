@@ -23,6 +23,7 @@ import { formatTimestamp } from "@/utils/timestamp-utils";
 import { AppBar } from "../app-bar/indext";
 import Spacer from "../utils/spacer/spacer";
 import { toTitleCase } from "@/utils/string-utils";
+import { MarkdownContent } from "../add-plant-form/plant-info-view.sc";
 
 interface PlantDetailsProps {
   plantId: string;
@@ -160,6 +161,15 @@ const PlantDetails: React.FC<PlantDetailsProps> = ({ plantId }) => {
             </DetailItem>
           )}
         </DetailsList>
+      </DetailsSection>
+
+      <Spacer size={24} />
+
+      <DetailsSection>
+        <SectionTitle>Sunlight Needs</SectionTitle>
+        <MarkdownContent>
+          {plant.plantCharacteristicDescription}
+        </MarkdownContent>
       </DetailsSection>
     </div>
   );
