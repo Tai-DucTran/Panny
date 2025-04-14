@@ -9,6 +9,7 @@ import { PlantTaskCard } from "@/components/task-list";
 import { AppBar } from "@/components/app-bar/indext";
 import Spacer from "@/components/utils/spacer/spacer";
 import EmptyTasks from "@/components/task-list/empty-task";
+import SubscriptionContainer from "@/components/task-list/subscription-container";
 
 // Helper function to find the earliest due date for a plant's tasks
 const getEarliestDueDate = (tasks: Task[]): Timestamp | null => {
@@ -93,6 +94,8 @@ const TasksPage = () => {
       <AppBar title="Take Care List" />
       <Spacer size={24} />
       <TaskListContainer>
+        <SubscriptionContainer />
+
         {forceShowEmptyState || plantsWithPendingTasks.length === 0 ? (
           <EmptyTasks hasPlants={plants.length > 0} />
         ) : (
