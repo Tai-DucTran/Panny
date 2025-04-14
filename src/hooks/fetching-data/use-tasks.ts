@@ -1,13 +1,24 @@
+// src/hooks/fetching-data/use-tasks.ts
 import { useEffect, useState, useCallback } from "react";
 import { Task, TaskStatus, TaskType } from "@/models/tasks";
 import { usePlantStore } from "@/store/plant-store";
 import { Timestamp } from "firebase/firestore";
-import { Plant } from "@/models/plant";
+import { Plant, AcquiredTimeOption } from "@/models/plant";
+
+export interface TaskUpdateResult {
+  success: boolean;
+  message: string;
+}
 
 export const useTasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { plants, fetchPlants, isLoading: plantsLoading } = usePlantStore();
+  const {
+    plants,
+    fetchPlants,
+    isLoading: plantsLoading,
+    updatePlant,
+  } = usePlantStore();
 
   // This function generates task ID in a consistent way
   const generateTaskId = useCallback(
@@ -41,58 +52,6 @@ export const useTasks = () => {
     [generateTaskId]
   );
 
-  // Generate repotting task from plant
-  const generateRepottingTask = useCallback(
-    (plant: Plant): Task | null => {
-      // If we don't have lastRepotted information yet, check if this is a newly bought plant
-      if (!plant.lastRepotted && !plant.repottingFrequency) {
-        // If it's a newly acquired plant, we should suggest repotting within a week
-        if (plant.acquiredTimeOption === "just_bought") {
-          // Create a timestamp for now to use as a base for the ID
-          const nowTimestamp = Timestamp.now();
-
-          // Set due date to one week from now
-          const dueDate = new Date();
-          dueDate.setDate(dueDate.getDate());
-
-          return {
-            id: generateTaskId(plant.id, TaskType.REPOTTING, nowTimestamp),
-            plantId: plant.id,
-            plantName: plant.name,
-            plantImageUrl: plant.imageUrl,
-            taskType: TaskType.REPOTTING,
-            dueDate: Timestamp.fromDate(dueDate),
-            status: TaskStatus.PENDING,
-          };
-        }
-        return null;
-      }
-
-      // Handle regular repotting schedule based on lastRepotted and frequency
-      if (!plant.lastRepotted || !plant.repottingFrequency) {
-        return null;
-      }
-
-      const lastRepottedDate = plant.lastRepotted.toDate();
-      const dueDate = new Date(lastRepottedDate);
-      dueDate.setMonth(dueDate.getMonth() - plant.repottingFrequency + 0.5);
-
-      // Add months to the due date based on repotting frequency (in months)
-      dueDate.setMonth(dueDate.getMonth() + plant.repottingFrequency);
-
-      return {
-        id: generateTaskId(plant.id, TaskType.REPOTTING, plant.lastRepotted),
-        plantId: plant.id,
-        plantName: plant.name,
-        plantImageUrl: plant.imageUrl,
-        taskType: TaskType.REPOTTING,
-        dueDate: Timestamp.fromDate(dueDate),
-        status: TaskStatus.PENDING,
-      };
-    },
-    [generateTaskId]
-  );
-
   const generateAllTasks = useCallback(() => {
     // Create an array to hold all new tasks
     const newTasks: Task[] = [];
@@ -102,13 +61,6 @@ export const useTasks = () => {
       const wateringTask = generateWateringTask(plant);
       if (wateringTask) {
         newTasks.push(wateringTask);
-      }
-
-      // Also generate repotting tasks
-      const repottingTask = generateRepottingTask(plant);
-      console.log("DEBUG in useTask - repottingTask", repottingTask);
-      if (repottingTask) {
-        newTasks.push(repottingTask);
       }
     });
 
@@ -137,7 +89,7 @@ export const useTasks = () => {
 
     return finalTasks;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plants, generateWateringTask, generateRepottingTask]);
+  }, [plants, generateWateringTask]);
 
   // Load data and generate tasks
   useEffect(() => {
@@ -170,22 +122,91 @@ export const useTasks = () => {
     }
   }, [plants, plantsLoading, generateAllTasks]);
 
-  // Complete a task
-  const completeTask = useCallback((taskId: string) => {
-    setTasks((prevTasks) =>
-      prevTasks.map((task) => {
-        if (task.id === taskId) {
+  // Complete a task and update the plant properties accordingly
+  const completeTask = useCallback(
+    async (taskId: string): Promise<TaskUpdateResult> => {
+      // Find the task to update
+      const taskToComplete = tasks.find((task) => task.id === taskId);
+
+      if (!taskToComplete) {
+        return {
+          success: false,
+          message: "Task not found",
+        };
+      }
+
+      // Find the related plant
+      const plant = plants.find((p) => p.id === taskToComplete.plantId);
+
+      if (!plant) {
+        return {
+          success: false,
+          message: "Plant not found",
+        };
+      }
+
+      // Update plant properties based on the task type
+      try {
+        const plantUpdateData: Partial<Plant> = {};
+        const now = Timestamp.now();
+
+        switch (taskToComplete.taskType) {
+          case TaskType.WATERING:
+            plantUpdateData.lastWatered = now;
+            break;
+
+          case TaskType.REPOTTING:
+            plantUpdateData.lastRepotted = now;
+            // If the plant was just bought, update its acquired time
+            if (plant.acquiredTimeOption === AcquiredTimeOption.JUST_BOUGHT) {
+              plantUpdateData.acquiredTimeOption = AcquiredTimeOption.LAST_WEEK;
+            }
+            break;
+          case TaskType.FERTILIZING:
+          case TaskType.PRUNING:
+          default:
+            break;
+        }
+
+        // Update the plant in Firestore
+        const updateSuccess = await updatePlant(plant.id, plantUpdateData);
+
+        if (!updateSuccess) {
           return {
-            ...task,
-            status: TaskStatus.COMPLETED,
-            completed: true,
-            completedAt: Timestamp.now(),
+            success: false,
+            message: "Failed to update plant data",
           };
         }
-        return task;
-      })
-    );
-  }, []);
+
+        // Update the local task state
+        setTasks((prevTasks) =>
+          prevTasks.map((task) => {
+            if (task.id === taskId) {
+              return {
+                ...task,
+                status: TaskStatus.COMPLETED,
+                completed: true,
+                completedAt: now,
+              };
+            }
+            return task;
+          })
+        );
+
+        return {
+          success: true,
+          message: `${taskToComplete.taskType} task completed successfully`,
+        };
+      } catch (error) {
+        console.error("Error completing task:", error);
+        return {
+          success: false,
+          message: "An error occurred while updating plant data",
+        };
+      }
+    },
+    [tasks, plants, updatePlant]
+  );
 
   // Filter functions with fixed dependencies
   const getDueTasks = useCallback(() => {

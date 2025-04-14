@@ -9,6 +9,8 @@ import {
   where,
   serverTimestamp,
   Timestamp,
+  doc,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "@/services/firebase/firebase-config";
 import { FirebaseError } from "firebase/app";
@@ -23,6 +25,7 @@ interface PlantState {
   error: string | null;
   fetchPlants: () => Promise<void>;
   addPlant: (plantData: Plant) => Promise<Plant | null>;
+  updatePlant: (plantId: string, plantData: Partial<Plant>) => Promise<boolean>;
   setPlants: (plants: Plant[]) => void;
 }
 
@@ -140,6 +143,50 @@ export const usePlantStore = create<PlantState>((set, get) => ({
         isLoading: false,
       });
       return null;
+    }
+  },
+
+  updatePlant: async (plantId: string, plantData: Partial<Plant>) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      // Create an update object with the updated fields and add updatedAt
+      const updateData = {
+        ...plantData,
+        updatedAt: serverTimestamp(),
+      };
+
+      // Get reference to the plant document
+      const plantRef = doc(db, PLANTS_COLLECTION, plantId);
+
+      // Update the document in Firestore
+      await updateDoc(plantRef, updateData);
+
+      // Update the plant in the local state
+      const updatedPlants = get().plants.map((plant) => {
+        if (plant.id === plantId) {
+          return {
+            ...plant,
+            ...plantData,
+            updatedAt: Timestamp.now(), // Local placeholder until we refresh
+          };
+        }
+        return plant;
+      });
+
+      set({
+        plants: updatedPlants,
+        isLoading: false,
+      });
+
+      return true;
+    } catch (error) {
+      console.error("Error updating plant:", error);
+      set({
+        error: getErrorMessage(error),
+        isLoading: false,
+      });
+      return false;
     }
   },
 

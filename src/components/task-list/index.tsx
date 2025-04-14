@@ -1,14 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { Plant, HealthStatus } from "@/models/plant";
 import { Task, TaskStatus } from "@/models/tasks";
 import { formatDistanceToNow } from "@/utils/date-utils";
 import * as SC from "./index.sc";
+import { TaskUpdateResult } from "@/hooks/fetching-data/use-tasks";
 
 interface PlantTaskCardProps {
   plant: Plant;
   tasks: Task[];
-  onCompleteTask: (taskId: string) => void;
+  onCompleteTask: (taskId: string) => Promise<TaskUpdateResult>;
 }
 
 const MAX_TASKS_DISPLAY = 2;
@@ -18,6 +19,13 @@ export const PlantTaskCard: React.FC<PlantTaskCardProps> = ({
   tasks,
   onCompleteTask,
 }) => {
+  const [completingTasks, setCompletingTasks] = useState<Set<string>>(
+    new Set()
+  );
+  const [completionMessages, setCompletionMessages] = useState<
+    Map<string, { message: string; isError: boolean }>
+  >(new Map());
+
   const sortedTasks = [...tasks].sort(
     (a, b) => a.dueDate.toMillis() - b.dueDate.toMillis()
   );
@@ -28,17 +36,56 @@ export const PlantTaskCard: React.FC<PlantTaskCardProps> = ({
     plant.location?.room || plant.location?.city || "Unknown Location";
   const imageUrl = plant.imageUrl || "/images/plants/normal-plants/plant-2.jpg";
 
-  const handleCheckboxChange = (taskId: string) => {
-    onCompleteTask(taskId);
-    // Optionally add visual feedback here (e.g., temporary strikethrough)
-    // Note: The task will disappear from this list on next render if task state updates correctly
-  };
+  const handleCheckboxChange = async (taskId: string) => {
+    // Set loading state
+    setCompletingTasks((prev) => {
+      const newSet = new Set(prev);
+      newSet.add(taskId);
+      return newSet;
+    });
 
-  console.log("DEBUG in PlantTaskCard - plant", plant);
+    try {
+      // Call the async function that completes the task and updates plant data
+      const result = await onCompleteTask(taskId);
+
+      // Show a message based on the result
+      setCompletionMessages((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(taskId, {
+          message: result.message,
+          isError: !result.success,
+        });
+        return newMap;
+      });
+
+      // If successful, remove the task from view after a delay
+      if (result.success) {
+        setTimeout(() => {
+          setCompletionMessages((prev) => {
+            const newMap = new Map(prev);
+            newMap.delete(taskId);
+            return newMap;
+          });
+        }, 3000);
+      }
+    } catch (error) {
+      console.error(
+        "Something went wring during handleCheckboxChange: ",
+        error
+      );
+    } finally {
+      // Remove loading state
+      setCompletingTasks((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(taskId);
+        return newSet;
+      });
+    }
+  };
 
   return (
     <SC.CardWrapper>
-      {/* Plant Info Section (remains the same) */}
+      {/* Plant Info Section */}
       <SC.PlantInfoSection>
         <SC.PlantImageContainer>
           <Image
@@ -60,29 +107,45 @@ export const PlantTaskCard: React.FC<PlantTaskCardProps> = ({
         </SC.PlantDetails>
       </SC.PlantInfoSection>
 
-      {/* Divider (remains the same) */}
+      {/* Divider */}
       <SC.Divider />
 
-      {/* Updated Task Section */}
+      {/* Task Section */}
       <SC.TaskSection>
         {tasksToDisplay.map((task) => {
           const dueDate = task.dueDate.toDate();
           const isOverdue =
             task.status === TaskStatus.PENDING && dueDate <= now;
+          const isCompleting = completingTasks.has(task.id);
+          const completionInfo = completionMessages.get(task.id);
+
           return (
             <SC.TaskItem key={task.id}>
               {/* Group Name and Date */}
               <SC.TaskTextContainer>
                 <SC.TaskName>{task.taskType}</SC.TaskName>
-                <SC.TaskDueDate isOverdue={isOverdue}>
-                  {formatDistanceToNow(dueDate)}
-                </SC.TaskDueDate>
+                {completionInfo ? (
+                  <SC.TaskCompletionMessage isError={completionInfo.isError}>
+                    {completionInfo.message}
+                  </SC.TaskCompletionMessage>
+                ) : (
+                  <SC.TaskDueDate isOverdue={isOverdue}>
+                    {isCompleting
+                      ? "Updating..."
+                      : formatDistanceToNow(dueDate)}
+                  </SC.TaskDueDate>
+                )}
               </SC.TaskTextContainer>
 
               {/* Checkbox */}
               <SC.TaskCheckbox
-                checked={false} // Checkbox is always unchecked initially in this view (pending tasks)
-                onChange={() => handleCheckboxChange(task.id)}
+                checked={task.status === TaskStatus.COMPLETED}
+                onChange={() => {
+                  if (!isCompleting && task.status !== TaskStatus.COMPLETED) {
+                    handleCheckboxChange(task.id);
+                  }
+                }}
+                disabled={isCompleting || task.status === TaskStatus.COMPLETED}
               />
             </SC.TaskItem>
           );

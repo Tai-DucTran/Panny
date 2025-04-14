@@ -1,4 +1,4 @@
-// src/components/task-list/plant-task-card.sc.ts
+// src/components/task-list/index.sc.ts
 import styled from "styled-components";
 import { theme } from "@/styles/theme";
 import { HealthStatus } from "@/models/plant"; // Import HealthStatus enum
@@ -96,29 +96,24 @@ export const TaskSection = styled.div`
   align-items: center; /* Align items vertically if they wrap */
 `;
 
-// --- MODIFIED TaskItem ---
 // It now just groups text and checkbox together closely
 export const TaskItem = styled.div`
   display: flex;
   align-items: center; /* Vertically center text block and checkbox */
   gap: 8px; /* Gap between text container and checkbox */
-  /* Remove justify-content: space-between; */
 `;
 
-// TaskTextContainer remains the same
 export const TaskTextContainer = styled.div`
   display: flex;
   flex-direction: column;
 `;
 
-// TaskName remains the same
 export const TaskName = styled.span`
   color: ${theme.colors.palette.darkCharcoal};
   font-size: 0.95rem;
   font-weight: 500;
 `;
 
-// TaskDueDate remains the same
 export const TaskDueDate = styled.span.withConfig({
   shouldForwardProp: (prop) => prop !== "isOverdue",
 })<{ isOverdue?: boolean }>`
@@ -129,12 +124,40 @@ export const TaskDueDate = styled.span.withConfig({
   margin-top: 2px;
 `;
 
-// TaskCheckbox remains the same
+// New component for task completion messages
+export const TaskCompletionMessage = styled.span.withConfig({
+  shouldForwardProp: (prop) => prop !== "isError",
+})<{ isError: boolean }>`
+  color: ${({ isError }) =>
+    isError
+      ? theme.colors.palette.bigFootFeet
+      : theme.colors.palette.russianGreen};
+  font-weight: 500;
+  font-size: 0.8rem;
+  margin-top: 2px;
+  font-style: italic;
+  animation: fadeIn 0.3s ease-in;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
+
 export const TaskCheckbox = styled.input.attrs({ type: "checkbox" })`
   width: 20px;
   height: 20px;
   cursor: pointer;
   accent-color: ${theme.colors.palette.russianGreen};
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
 `;
 
 // MoreTasksBadge remains the same - will appear below the wrapped tasks if count > MAX_TASKS_DISPLAY
@@ -162,10 +185,30 @@ export const SectionTitle = styled.h2`
   font-size: 1.5rem;
 `;
 
-// Definition is here:
 export const EmptyTasksMessage = styled.p`
   text-align: center;
   color: #666;
   font-style: italic;
   margin: 2rem 0;
+`;
+
+export const UpdateMessage = styled.div`
+  background-color: ${theme.colors.palette.russianGreen};
+  color: white;
+  padding: 0.75rem;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 1rem;
+  animation: slideDown 0.3s ease-out;
+
+  @keyframes slideDown {
+    from {
+      transform: translateY(-20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
 `;

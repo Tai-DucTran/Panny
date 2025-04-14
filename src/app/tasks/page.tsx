@@ -9,7 +9,7 @@ import {
   EmptyTasksMessage,
   TaskListContainer,
 } from "@/components/task-list/index.sc";
-import { Timestamp } from "firebase/firestore"; // Import Timestamp
+import { Timestamp } from "firebase/firestore";
 import { LoadingSpinner } from "@/components/spinner";
 import { PlantTaskCard } from "@/components/task-list";
 import { AppBar } from "@/components/app-bar/indext";
