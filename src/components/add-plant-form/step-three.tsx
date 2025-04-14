@@ -24,6 +24,7 @@ import {
   formatTimestampForDateInput,
   dateStringToTimestamp,
 } from "@/utils/timestamp-utils";
+import { theme } from "@/styles/theme";
 
 interface StepThreeProps {
   formData: Partial<Plant>;
@@ -182,7 +183,13 @@ const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
       </FormGroup>
 
       <FormGroup>
-        <StyledLabel htmlFor="healthStatus">
+        <StyledLabel
+          htmlFor="healthStatus"
+          style={{
+            color: theme.colors.palette.bigFootFeet,
+            fontWeight: "bolder",
+          }}
+        >
           How healthy is your plant now?
         </StyledLabel>
         <StyledSelect
@@ -198,14 +205,20 @@ const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
       </FormGroup>
 
       <FormGroup>
-        <StyledLabel htmlFor="notes">
-          Notes about your plant (optional):
+        <StyledLabel
+          htmlFor="notes"
+          style={{
+            color: theme.colors.palette.bigFootFeet,
+            fontWeight: "bolder",
+          }}
+        >
+          Tell Panny about your plant condition (recommend):
         </StyledLabel>
         <StyledTextarea
           id="notes"
           value={formData.notes || ""}
           onChange={(e) => updateFormData({ notes: e.target.value })}
-          placeholder="Add any special notes about caring for your plant..."
+          placeholder="Add any special notes about your current plant health..."
           rows={4}
         />
       </FormGroup>

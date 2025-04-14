@@ -12,6 +12,7 @@ export const theme = {
       whiteCoffee: "#E4E2CF",
       alabaster: "#ECEAE4",
       roseEbony: "#624646",
+      bigFootFeet: "#EC8B62",
     },
   },
 };
