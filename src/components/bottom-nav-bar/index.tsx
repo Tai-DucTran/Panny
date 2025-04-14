@@ -1,6 +1,6 @@
 "use client";
 
-import { HandCoinsIcon, TreesIcon, User } from "lucide-react";
+import { HandCoinsIcon, ListCheck, TreesIcon, User } from "lucide-react";
 import * as S from "./index.sc";
 import { usePathname } from "next/dist/client/components/navigation";
 
@@ -12,6 +12,11 @@ export default function BottomNavBar() {
       <S.NavItem href="/" isSelected={pathname == "/"}>
         <TreesIcon />
         Your Garden
+      </S.NavItem>
+
+      <S.NavItem href="/tasks" isSelected={pathname == "/tasks"}>
+        <ListCheck />
+        Tasks
       </S.NavItem>
 
       <S.NavItem
