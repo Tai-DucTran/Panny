@@ -6,14 +6,16 @@ import {
   PlantInfoBox,
   PlantInfoHeader,
   PlantInfoText,
-  CollapsedText,
   ExpandableButton,
   LoadingContainer,
   LoadingText,
+  MarkdownContent,
+  CollapsedMarkdownContent,
 } from "./plant-info-view.sc";
 import { Plant } from "@/models/plant";
 import { usePlantInfo } from "@/hooks/fetching-data/use-plant-info";
 import { LoadingSpinner } from "@/components/spinner";
+import ReactMarkdown from "react-markdown";
 
 interface PlantInfoViewProps {
   plantName: string;
@@ -84,9 +86,13 @@ const PlantInfoView: React.FC<PlantInfoViewProps> = ({
             <PlantInfoHeader>{plantName}</PlantInfoHeader>
             <PlantInfoText>
               {expanded ? (
-                <p>{plantDescription}</p>
+                <MarkdownContent>
+                  <ReactMarkdown>{plantDescription}</ReactMarkdown>
+                </MarkdownContent>
               ) : (
-                <CollapsedText>{plantDescription}</CollapsedText>
+                <CollapsedMarkdownContent>
+                  <ReactMarkdown>{plantDescription}</ReactMarkdown>
+                </CollapsedMarkdownContent>
               )}
               <ExpandableButton onClick={() => setExpanded(!expanded)}>
                 {expanded ? "Show Less" : "Read More"}
