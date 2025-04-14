@@ -1,4 +1,4 @@
-// src/services/geminiService.ts
+// src/services/gemini/gemini-plant-service.ts
 import { Plant } from "@/models/plant";
 import { geminiModel } from "../firebase/firebase-config";
 
@@ -63,7 +63,20 @@ export class GeminiService {
         prompt = `List the common diseases and issues that affect ${plantName}, including symptoms and treatments.`;
         break;
       case "diagnosis":
-        prompt = `Based on the following description, diagnose the issue with the ${plantName}: ${additionalContext}`;
+        prompt = `
+        You are a plant health specialist. Based on the following information, provide a diagnosis and care recommendations for a ${plantName}:
+        
+        User's description: ${
+          additionalContext || "No additional information provided."
+        }
+        
+        Please include:
+        1. Potential causes for the plant's current condition
+        2. Specific care actions to improve the plant's health
+        3. Preventive measures to avoid similar issues in the future
+        
+        Format your response in markdown with clear sections and bullet points where appropriate.
+        `;
         break;
     }
 

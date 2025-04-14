@@ -12,10 +12,11 @@ import {
   MarkdownContent,
   CollapsedMarkdownContent,
 } from "./plant-info-view.sc";
-import { Plant } from "@/models/plant";
+import { HealthStatus, Plant } from "@/models/plant";
 import { usePlantInfo } from "@/hooks/fetching-data/use-plant-info";
 import { LoadingSpinner } from "@/components/spinner";
 import ReactMarkdown from "react-markdown";
+import TakeCareRecommendation from "./take-care-recommendation";
 
 interface PlantInfoViewProps {
   plantName: string;
@@ -54,6 +55,8 @@ const PlantInfoView: React.FC<PlantInfoViewProps> = ({
           imageUrl: formData.imageUrl,
           location: formData.location,
           acquiredTimeOption: formData.acquiredTimeOption,
+          healthStatus: formData.healthStatus, // Keep user-provided health status
+          notes: formData.notes, // Keep user-provided notes
         });
 
         setDataFetched(true);
@@ -81,25 +84,39 @@ const PlantInfoView: React.FC<PlantInfoViewProps> = ({
           <LoadingText>Gathering information about your plant...</LoadingText>
         </LoadingContainer>
       ) : (
-        <InfoContainer>
-          <PlantInfoBox>
-            <PlantInfoHeader>{plantName}</PlantInfoHeader>
-            <PlantInfoText>
-              {expanded ? (
-                <MarkdownContent>
-                  <ReactMarkdown>{plantDescription}</ReactMarkdown>
-                </MarkdownContent>
-              ) : (
-                <CollapsedMarkdownContent>
-                  <ReactMarkdown>{plantDescription}</ReactMarkdown>
-                </CollapsedMarkdownContent>
-              )}
-              <ExpandableButton onClick={() => setExpanded(!expanded)}>
-                {expanded ? "Show Less" : "Read More"}
-              </ExpandableButton>
-            </PlantInfoText>
-          </PlantInfoBox>
-        </InfoContainer>
+        <>
+          <InfoContainer>
+            <PlantInfoBox>
+              <PlantInfoHeader>{plantName}</PlantInfoHeader>
+              <PlantInfoText>
+                {expanded ? (
+                  <MarkdownContent>
+                    <ReactMarkdown>{plantDescription}</ReactMarkdown>
+                  </MarkdownContent>
+                ) : (
+                  <CollapsedMarkdownContent>
+                    <ReactMarkdown>{plantDescription}</ReactMarkdown>
+                  </CollapsedMarkdownContent>
+                )}
+                <ExpandableButton onClick={() => setExpanded(!expanded)}>
+                  {expanded ? "Show Less" : "Read More"}
+                </ExpandableButton>
+              </PlantInfoText>
+            </PlantInfoBox>
+          </InfoContainer>
+
+          {/* Add TakeCareRecommendation component if plant health is not optimal */}
+          {formData.healthStatus &&
+            (formData.healthStatus === HealthStatus.FAIR ||
+              formData.healthStatus === HealthStatus.POOR ||
+              formData.healthStatus === HealthStatus.CRITICAL) && (
+              <TakeCareRecommendation
+                plantName={plantName}
+                healthStatus={formData.healthStatus}
+                notes={formData.notes || ""}
+              />
+            )}
+        </>
       )}
     </StepContainer>
   );

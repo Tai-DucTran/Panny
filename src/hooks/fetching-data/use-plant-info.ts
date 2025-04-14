@@ -1,61 +1,51 @@
-// src/hooks/usePlantInfo.ts
+// src/hooks/fetching-data/use-plant-info.ts
+import { useState } from "react";
 import {
   geminiService,
   PlantInfoResponse,
 } from "@/services/gemini/gemini-plant-service";
-import { useState } from "react";
 
-export const usePlantInfo = () => {
+interface UsePlantInfoResult {
+  loading: boolean;
+  error: string | null;
+  plantInfo: PlantInfoResponse | null;
+  fetchPlantInfo: (plantName: string) => Promise<PlantInfoResponse | null>;
+}
+
+export const usePlantInfo = (): UsePlantInfoResult => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [plantInfo, setPlantInfo] = useState<PlantInfoResponse | null>(null);
 
   const fetchPlantInfo = async (
-    plantSpecies: string
+    plantName: string
   ): Promise<PlantInfoResponse | null> => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await geminiService.getPlantCompleteInfo(plantSpecies);
-      return response;
-    } catch (err) {
-      setError("Failed to fetch plant information");
-      console.error("Error fetching plant information:", err);
+    if (!plantName) {
+      setError("Plant name is required");
       return null;
-    } finally {
-      setLoading(false);
     }
-  };
-
-  // This keeps backward compatibility with your original method
-  const getPlantInformation = async (
-    plantName: string,
-    requestType: "characteristics" | "care" | "illness" | "diagnosis",
-    additionalContext?: string
-  ): Promise<string | null> => {
-    setLoading(true);
-    setError(null);
 
     try {
-      const response = await geminiService.getPlantInformation({
-        plantName,
-        requestType,
-        additionalContext,
-      });
+      setLoading(true);
+      setError(null);
+
+      // Use the Gemini service to get plant information
+      const response = await geminiService.getPlantCompleteInfo(plantName);
+      setPlantInfo(response);
+      setLoading(false);
       return response;
     } catch (err) {
-      setError("Failed to fetch plant information");
-      console.error("Error fetching plant information:", err);
-      return null;
-    } finally {
+      console.error("Error fetching plant info:", err);
+      setError("Unable to load plant information. Please try again later.");
       setLoading(false);
+      return null;
     }
   };
 
   return {
-    fetchPlantInfo,
-    getPlantInformation,
     loading,
     error,
+    plantInfo,
+    fetchPlantInfo,
   };
 };
