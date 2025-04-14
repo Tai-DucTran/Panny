@@ -5,7 +5,7 @@ import { usePlantStore } from "./plant-store";
 import { Timestamp } from "firebase/firestore";
 import {
   generateWateringTaskFromPlant,
-  generateRepottingTaskFromPlant,
+  generateRepottingTaskFromPlant, // Add this import
   Task,
   TaskStatus,
 } from "@/models/tasks";
@@ -29,22 +29,21 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     const { tasks } = get();
     const { plants } = usePlantStore.getState();
 
-    // Start with fresh sets of tasks
-    const generatedTasks: Task[] = [];
+    // Start with a fresh set of tasks
+    const wateringTasks: Task[] = [];
+    const repottingTasks: Task[] = []; // New array for repotting tasks
 
-    // Generate watering and repotting tasks for each plant
+    // Generate watering tasks for each plant
     plants.forEach((plant) => {
-      // Generate watering task if applicable
       const wateringTask = generateWateringTaskFromPlant(plant);
       if (wateringTask) {
-        generatedTasks.push(wateringTask);
+        wateringTasks.push(wateringTask);
       }
 
-      // Generate repotting task
-      // This now includes special handling for newly purchased plants
+      // Generate repotting tasks for each plant
       const repottingTask = generateRepottingTaskFromPlant(plant);
       if (repottingTask) {
-        generatedTasks.push(repottingTask);
+        repottingTasks.push(repottingTask);
       }
     });
 
@@ -54,7 +53,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     );
 
     set({
-      tasks: [...generatedTasks, ...completedTasks],
+      tasks: [...wateringTasks, ...repottingTasks, ...completedTasks], // Include repotting tasks
       isLoading: false,
     });
   },

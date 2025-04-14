@@ -85,7 +85,6 @@ export const PlantTaskCard: React.FC<PlantTaskCardProps> = ({
 
   return (
     <SC.CardWrapper>
-      {/* Plant Info Section */}
       <SC.PlantInfoSection>
         <SC.PlantImageContainer>
           <Image

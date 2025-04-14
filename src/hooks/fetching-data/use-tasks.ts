@@ -52,6 +52,29 @@ export const useTasks = () => {
     [generateTaskId]
   );
 
+  const generateRepottingTask = useCallback(
+    (plant: Plant): Task | null => {
+      if (!plant.lastRepotted || !plant.repottingFrequency) {
+        return null;
+      }
+
+      const lastRepottedDate = plant.lastRepotted.toDate();
+      const dueDate = new Date(lastRepottedDate);
+      dueDate.setMonth(dueDate.getMonth() - plant.repottingFrequency + 0.5);
+
+      return {
+        id: generateTaskId(plant.id, TaskType.REPOTTING, plant.lastRepotted),
+        plantId: plant.id,
+        plantName: plant.name,
+        plantImageUrl: plant.imageUrl,
+        taskType: TaskType.REPOTTING,
+        dueDate: Timestamp.fromDate(dueDate),
+        status: TaskStatus.PENDING,
+      };
+    },
+    [generateTaskId]
+  );
+
   const generateAllTasks = useCallback(() => {
     // Create an array to hold all new tasks
     const newTasks: Task[] = [];
@@ -61,6 +84,10 @@ export const useTasks = () => {
       const wateringTask = generateWateringTask(plant);
       if (wateringTask) {
         newTasks.push(wateringTask);
+      }
+      const repottingTask = generateRepottingTask(plant);
+      if (repottingTask) {
+        newTasks.push(repottingTask);
       }
     });
 
@@ -89,7 +116,7 @@ export const useTasks = () => {
 
     return finalTasks;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plants, generateWateringTask]);
+  }, [plants, generateWateringTask, generateRepottingTask]);
 
   // Load data and generate tasks
   useEffect(() => {
@@ -157,7 +184,6 @@ export const useTasks = () => {
 
           case TaskType.REPOTTING:
             plantUpdateData.lastRepotted = now;
-            // If the plant was just bought, update its acquired time
             if (plant.acquiredTimeOption === AcquiredTimeOption.JUST_BOUGHT) {
               plantUpdateData.acquiredTimeOption = AcquiredTimeOption.LAST_WEEK;
             }

@@ -59,7 +59,7 @@ export function generateRepottingTaskFromPlant(plant: Plant): Task | null {
     if (plant.lastRepotted && plant.repottingFrequency) {
       const lastRepottedDate = plant.lastRepotted.toDate();
       const dueDate = new Date(lastRepottedDate);
-      dueDate.setMonth(dueDate.getMonth() + plant.repottingFrequency);
+      dueDate.setMonth(dueDate.getMonth() - plant.repottingFrequency + 0.5);
 
       const taskId = `repotting-${plant.id}-${plant.lastRepotted.seconds}`;
 
