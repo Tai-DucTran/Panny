@@ -13,9 +13,24 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePlantStore } from "@/store/plant-store";
 import { LoadingSpinner } from "@/components/spinner";
+import { HealthStatus } from "@/models/plant";
+
+const healthStatusOrder: HealthStatus[] = [
+  HealthStatus.CRITICAL,
+  HealthStatus.POOR,
+  HealthStatus.FAIR,
+  HealthStatus.GOOD,
+  HealthStatus.EXCELLENT,
+];
 
 export default function GardenList() {
   const { plants, fetchPlants, isLoading } = usePlantStore();
+
+  const sortedPlants = [...plants].sort((a, b) => {
+    const indexA = healthStatusOrder.indexOf(a.healthStatus);
+    const indexB = healthStatusOrder.indexOf(b.healthStatus);
+    return indexA - indexB; // Sorts in ascending order based on the index in healthStatusOrder
+  });
 
   useEffect(() => {
     const loadPlants = async () => {
@@ -29,10 +44,10 @@ export default function GardenList() {
     return <LoadingSpinner size="large" />;
   }
 
-  if (plants.length > 0) {
+  if (sortedPlants.length > 0) {
     return (
       <ListOfItems>
-        {plants.map((plant) => (
+        {sortedPlants.map((plant) => (
           <PlantCard key={plant.id} plant={plant} />
         ))}
       </ListOfItems>

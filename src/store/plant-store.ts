@@ -8,6 +8,7 @@ import {
   query,
   where,
   serverTimestamp,
+  Timestamp,
 } from "firebase/firestore";
 import { db } from "@/services/firebase/firebase-config";
 import { FirebaseError } from "firebase/app";
@@ -88,6 +89,7 @@ export const usePlantStore = create<PlantState>((set, get) => ({
   },
 
   addPlant: async (plantData: Plant) => {
+    // plantData type now includes the optional new field
     set({ isLoading: true, error: null });
 
     try {
@@ -97,9 +99,9 @@ export const usePlantStore = create<PlantState>((set, get) => ({
         throw new Error("User not authenticated");
       }
 
-      // Add user ID to associate the plant with the current user
+      // Include plantCharacteristicDescription along with other fields
       const plantWithUserId = {
-        ...plantData,
+        ...plantData, // This will include plantCharacteristicDescription if present
         userId: currentUser.uid,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -108,19 +110,25 @@ export const usePlantStore = create<PlantState>((set, get) => ({
       // Add document to Firestore
       const docRef = await addDoc(
         collection(db, PLANTS_COLLECTION),
-        plantWithUserId
+        plantWithUserId // Pass the complete object
       );
 
-      // Return the newly created plant with its Firestore ID
-      const newPlant = {
+      // We need to get the actual server timestamp after adding
+      // For simplicity here, we'll return the data as passed, but ideally,
+      // you'd fetch the created doc or handle the timestamp locally if needed immediately.
+      const newPlant: Plant = {
         ...plantData,
         id: docRef.id,
+        userId: currentUser.uid,
+        // Note: createdAt/updatedAt here are placeholders until fetched or handled
+        createdAt: Timestamp.now(), // Example placeholder
+        updatedAt: Timestamp.now(), // Example placeholder
       };
 
       // Update the store with the new plant
       const currentPlants = get().plants;
       set({
-        plants: [newPlant, ...currentPlants],
+        plants: [newPlant, ...currentPlants], // Add to the beginning
         isLoading: false,
       });
 

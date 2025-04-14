@@ -18,7 +18,7 @@ export interface Plant {
 
   // Care requirements
   wateringFrequency: number;
-  lastWatered?: Timestamp; // Changed from Date to Timestamp
+  lastWatered?: Timestamp;
   sunlightNeeds: SunlightLevel;
   humidityPreference: HumidityLevel;
   temperature: {
@@ -29,7 +29,7 @@ export interface Plant {
 
   // Soil information
   soilType: SoilType[];
-  lastRepotted?: Timestamp; // Changed from Date to Timestamp
+  lastRepotted?: Timestamp;
   repottingFrequency: number;
 
   // Health tracking

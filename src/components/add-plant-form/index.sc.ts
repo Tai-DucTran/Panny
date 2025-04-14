@@ -1,4 +1,3 @@
-// src/components/AddPlantForm/AddPlantForm.styles.ts
 import { theme } from "@/styles/theme";
 import styled from "styled-components";
 
