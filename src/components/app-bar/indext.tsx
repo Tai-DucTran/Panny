@@ -1,4 +1,5 @@
-import router from "next/router";
+"use client";
+import { useRouter } from "next/navigation";
 import { BackButton, Title, CustomAppBar } from "./index.sc";
 import { ReactNode } from "react";
 
@@ -15,6 +16,8 @@ export const AppBar = ({
   showBackButton = true,
   rightSlot,
 }: AppBarProps) => {
+  const router = useRouter();
+
   const handleBack = () => {
     if (onBack) {
       onBack();
