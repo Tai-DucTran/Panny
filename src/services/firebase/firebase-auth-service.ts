@@ -8,7 +8,13 @@ import {
   signInAnonymously,
   User as FirebaseUser,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+  Timestamp,
+} from "firebase/firestore";
 import { db } from "./firebase-config";
 import { User } from "@/models/user";
 
@@ -22,9 +28,11 @@ const convertFirebaseUserToUser = (firebaseUser: FirebaseUser): User => {
     displayName: firebaseUser.displayName,
     photoURL: firebaseUser.photoURL,
     isAnonymous: firebaseUser.isAnonymous,
-    createdAt: new Date(parseInt(firebaseUser.metadata.creationTime || "0")),
-    lastLoginAt: new Date(
-      parseInt(firebaseUser.metadata.lastSignInTime || "0")
+    createdAt: Timestamp.fromDate(
+      new Date(parseInt(firebaseUser.metadata.creationTime || "0"))
+    ),
+    lastLoginAt: Timestamp.fromDate(
+      new Date(parseInt(firebaseUser.metadata.lastSignInTime || "0"))
     ),
   };
 };
