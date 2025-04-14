@@ -1,3 +1,15 @@
+"use client";
+
+import PlantDetails from "@/components/plant-detail-page/indext";
+import { useParams } from "next/navigation";
+
 export default function PlantDetailPage() {
-  return <div>This is the Plant Detail Page</div>;
+  const params = useParams();
+  const plantId = params.id as string;
+
+  return (
+    <div>
+      <PlantDetails plantId={plantId} />
+    </div>
+  );
 }

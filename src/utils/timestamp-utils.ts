@@ -1,56 +1,43 @@
-// src/utils/timestamp-utils.ts
 import { Timestamp } from "firebase/firestore";
 
-/**
- * Converts a JavaScript Date to a Firestore Timestamp
- */
-export const dateToTimestamp = (
-  date: Date | undefined
-): Timestamp | undefined => {
-  if (!date) return undefined;
-  return Timestamp.fromDate(date);
+// Format a Timestamp for display in the UI (e.g., "Apr 14, 2023")
+export const formatTimestamp = (timestamp: Timestamp | undefined): string => {
+  if (!timestamp) return "Unknown";
+
+  const date = timestamp.toDate();
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 };
 
-/**
- * Converts a Firestore Timestamp to a JavaScript Date
- */
-export const timestampToDate = (
-  timestamp: Timestamp | undefined
-): Date | undefined => {
-  if (!timestamp) return undefined;
-  return timestamp.toDate();
-};
-
-/**
- * Gets the current date as a Firestore Timestamp
- */
-export const nowTimestamp = (): Timestamp => {
-  return Timestamp.now();
-};
-
-/**
- * Formats a Timestamp for display in YYYY-MM-DD format
- * Used for input[type="date"] values
- */
+// Format a Timestamp for an HTML date input (YYYY-MM-DD)
 export const formatTimestampForDateInput = (
   timestamp: Timestamp | undefined
 ): string => {
   if (!timestamp) return "";
+
   const date = timestamp.toDate();
   return date.toISOString().split("T")[0];
 };
 
-/**
- * Gets today's date in YYYY-MM-DD format for input[type="date"] max attribute
- */
-export const getTodayForDateInput = (): string => {
-  return new Date().toISOString().split("T")[0];
-};
-
-/**
- * Creates a Timestamp from a date string (YYYY-MM-DD)
- */
+// Convert a date string (YYYY-MM-DD) to a Timestamp
 export const dateStringToTimestamp = (dateString: string): Timestamp => {
   const date = new Date(dateString);
   return Timestamp.fromDate(date);
+};
+
+// Calculate days ago from a Timestamp
+export const daysAgo = (timestamp: Timestamp | undefined): string => {
+  if (!timestamp) return "Unknown";
+
+  const date = timestamp.toDate();
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - date.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  return `${diffDays} days ago`;
 };
