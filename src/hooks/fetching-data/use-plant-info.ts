@@ -4,12 +4,17 @@ import {
   geminiService,
   PlantInfoResponse,
 } from "@/services/gemini/gemini-plant-service";
+import { HealthStatus } from "@/models/plant";
 
 interface UsePlantInfoResult {
   loading: boolean;
   error: string | null;
   plantInfo: PlantInfoResponse | null;
-  fetchPlantInfo: (plantName: string) => Promise<PlantInfoResponse | null>;
+  fetchPlantInfo: (
+    plantName: string,
+    healthStatus?: HealthStatus,
+    notes?: string
+  ) => Promise<PlantInfoResponse | null>;
 }
 
 export const usePlantInfo = (): UsePlantInfoResult => {
@@ -18,7 +23,9 @@ export const usePlantInfo = (): UsePlantInfoResult => {
   const [plantInfo, setPlantInfo] = useState<PlantInfoResponse | null>(null);
 
   const fetchPlantInfo = async (
-    plantName: string
+    plantName: string,
+    healthStatus?: HealthStatus,
+    notes?: string
   ): Promise<PlantInfoResponse | null> => {
     if (!plantName) {
       setError("Plant name is required");
@@ -29,8 +36,13 @@ export const usePlantInfo = (): UsePlantInfoResult => {
       setLoading(true);
       setError(null);
 
-      // Use the Gemini service to get plant information
-      const response = await geminiService.getPlantCompleteInfo(plantName);
+      // Use the Gemini service to get plant information with optional diagnosis
+      const response = await geminiService.getPlantCompleteInfo(
+        plantName,
+        healthStatus,
+        notes
+      );
+
       setPlantInfo(response);
       setLoading(false);
       return response;

@@ -1,5 +1,5 @@
 // src/components/add-plant-form/take-care-recommendation.tsx
-import React, { useEffect } from "react";
+import React from "react";
 import {
   RecommendationContainer,
   RecommendationTitle,
@@ -10,20 +10,18 @@ import {
 import { LoadingSpinner } from "@/components/spinner";
 import { HealthStatus } from "@/models/plant";
 import ReactMarkdown from "react-markdown";
-import { usePlantDiagnosis } from "@/hooks/fetching-data/use-plant-diagnosis";
 
 interface TakeCareRecommendationProps {
-  plantName: string;
   healthStatus: HealthStatus;
-  notes: string;
+  diagnosis: string; // This prop will receive the diagnosis from parent
 }
 
 const TakeCareRecommendation: React.FC<TakeCareRecommendationProps> = ({
-  plantName,
   healthStatus,
-  notes,
+  diagnosis, // Accept the diagnosis from props
 }) => {
-  const { diagnosis, loading, error, fetchDiagnosis } = usePlantDiagnosis();
+  // Loading state - true if diagnosis is empty
+  const loading = !diagnosis;
 
   // Function to get health status display text
   const getHealthStatusLabel = (status: HealthStatus): string => {
@@ -42,15 +40,6 @@ const TakeCareRecommendation: React.FC<TakeCareRecommendationProps> = ({
         return "unknown";
     }
   };
-
-  useEffect(() => {
-    const getRecommendation = async () => {
-      if (!plantName || !healthStatus) return;
-      await fetchDiagnosis(plantName, healthStatus, notes);
-    };
-
-    getRecommendation();
-  }, [plantName, healthStatus, notes, fetchDiagnosis]);
 
   // Don't show anything if we don't have health status information
   if (!healthStatus) return null;
@@ -77,9 +66,11 @@ const TakeCareRecommendation: React.FC<TakeCareRecommendationProps> = ({
           <LoadingSpinner size="small" />
           <span>Getting care recommendations...</span>
         </LoadingRecommendation>
-      ) : error ? (
+      ) : !diagnosis ? (
         <RecommendationContent>
-          <p>{error}</p>
+          <p>
+            Unable to provide diagnosis at this time. Please try again later.
+          </p>
         </RecommendationContent>
       ) : (
         <RecommendationContent>

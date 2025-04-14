@@ -1,11 +1,15 @@
-// src/services/gemini/gemini-plant-service.ts
-import { Plant } from "@/models/plant";
+import { HealthStatus, Plant } from "@/models/plant";
 import { geminiModel } from "../firebase/firebase-config";
 
 export interface PlantInfoRequest {
   plantName: string;
   requestType: "characteristics" | "care" | "illness" | "diagnosis";
   additionalContext?: string;
+}
+export interface PlantInfoResponse {
+  description: string;
+  plantData: Partial<Plant>;
+  diagnosis?: string;
 }
 
 export interface PlantInfoResponse {
@@ -29,8 +33,12 @@ export class GeminiService {
     }
   }
 
-  async getPlantCompleteInfo(plantSpecies: string): Promise<PlantInfoResponse> {
-    const prompt = this.buildCompletePrompt(plantSpecies);
+  async getPlantCompleteInfo(
+    plantSpecies: string,
+    healthStatus?: HealthStatus,
+    notes?: string
+  ): Promise<PlantInfoResponse> {
+    const prompt = this.buildCompletePrompt(plantSpecies, healthStatus, notes);
 
     try {
       const result = await geminiModel.generateContent({
@@ -83,12 +91,16 @@ export class GeminiService {
     return prompt;
   }
 
-  private buildCompletePrompt(plantSpecies: string): string {
-    return `
+  private buildCompletePrompt(
+    plantSpecies: string,
+    healthStatus?: HealthStatus,
+    notes?: string
+  ): string {
+    let prompt = `
     I need detailed information about ${plantSpecies} houseplant for my plant care app. Please provide:
-
-    1. A detailed but concise human-readable description of the plant, its characteristics, care needs, illness, diagnosis and any special considerations.
-
+  
+    1. A detailed but concise human-readable description of the plant, its characteristics, care needs, and any special considerations.
+  
     2. A JSON object that conforms to my Plant interface with the following structure:
     
     {
@@ -109,16 +121,50 @@ export class GeminiService {
       "growthHabit": "UPRIGHT"|"BUSHY"|"TRAILING"|"CLIMBING"|"ROSETTE",
       "origin": geographic origin of the plant
     }
+    `;
 
-    Only include fields where you have high confidence in the information. Return the human-readable description followed by the JSON object, with the JSON clearly delimited.
+    // Add diagnosis request if health status is provided
+    if (
+      healthStatus &&
+      (healthStatus === HealthStatus.FAIR ||
+        healthStatus === HealthStatus.POOR ||
+        healthStatus === HealthStatus.CRITICAL)
+    ) {
+      prompt += `\n\n3. Considering that the plant appears to be in ${healthStatus.toLowerCase()} condition`;
+
+      if (notes) {
+        prompt += ` and the user noted: "${notes}"`;
+      }
+
+      prompt += `, provide a diagnosis and care recommendations to improve the plant's health. 
+      Include potential causes for the plant's current condition, specific actions to improve its health, 
+      and preventive measures to avoid similar issues in the future. Format this as markdown with clear sections and bullet points.`;
+    }
+
+    prompt += `\n\nOnly include fields where you have high confidence in the information. 
+    Return the human-readable description followed by the JSON object, with the JSON clearly delimited.
     Format your response exactly like this:
     <description>
     [Plant description here]
     </description>
     <plantData>
     [JSON data here]
-    </plantData>
-    `;
+    </plantData>`;
+
+    // Add diagnosis tag if health status is provided
+    if (
+      healthStatus &&
+      (healthStatus === HealthStatus.FAIR ||
+        healthStatus === HealthStatus.POOR ||
+        healthStatus === HealthStatus.CRITICAL)
+    ) {
+      prompt += `
+    <diagnosis>
+    [Diagnosis and care recommendations here]
+    </diagnosis>`;
+    }
+
+    return prompt;
   }
 
   private parseResponse(responseText: string): PlantInfoResponse {
@@ -128,8 +174,12 @@ export class GeminiService {
     const plantDataMatch = responseText.match(
       /<plantData>([\s\S]*?)<\/plantData>/
     );
+    const diagnosisMatch = responseText.match(
+      /<diagnosis>([\s\S]*?)<\/diagnosis>/
+    );
 
     const description = descriptionMatch ? descriptionMatch[1].trim() : "";
+    const diagnosis = diagnosisMatch ? diagnosisMatch[1].trim() : undefined;
     let plantData: Partial<Plant> = {};
 
     if (plantDataMatch) {
@@ -146,7 +196,7 @@ export class GeminiService {
       }
     }
 
-    return { description, plantData };
+    return { description, plantData, diagnosis };
   }
 }
 

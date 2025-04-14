@@ -33,13 +33,26 @@ const PlantInfoView: React.FC<PlantInfoViewProps> = ({
   const { fetchPlantInfo, loading } = usePlantInfo();
   const [plantDescription, setPlantDescription] = useState("");
   const [dataFetched, setDataFetched] = useState(false);
+  const [diagnosis, setDiagnosis] = useState("");
 
   const fetchPlantDetails = useCallback(async () => {
     if (!plantName || dataFetched) return;
 
     try {
       console.log("Fetching plant details for:", plantName);
-      const response = await fetchPlantInfo(plantName);
+
+      // Include health status and notes if plant isn't in good health
+      const needsDiagnosis =
+        formData.healthStatus &&
+        (formData.healthStatus === HealthStatus.FAIR ||
+          formData.healthStatus === HealthStatus.POOR ||
+          formData.healthStatus === HealthStatus.CRITICAL);
+
+      const response = await fetchPlantInfo(
+        plantName,
+        needsDiagnosis ? formData.healthStatus : undefined,
+        needsDiagnosis ? formData.notes : undefined
+      );
 
       if (response) {
         console.log("Plant details received:", response);
@@ -58,6 +71,12 @@ const PlantInfoView: React.FC<PlantInfoViewProps> = ({
           healthStatus: formData.healthStatus, // Keep user-provided health status
           notes: formData.notes, // Keep user-provided notes
         });
+
+        // If we received diagnosis information, set it in the TakeCareRecommendation component
+        if (response.diagnosis) {
+          // Store diagnosis in a state variable that will be passed to TakeCareRecommendation
+          setDiagnosis(response.diagnosis);
+        }
 
         setDataFetched(true);
       }
@@ -111,9 +130,8 @@ const PlantInfoView: React.FC<PlantInfoViewProps> = ({
               formData.healthStatus === HealthStatus.POOR ||
               formData.healthStatus === HealthStatus.CRITICAL) && (
               <TakeCareRecommendation
-                plantName={plantName}
                 healthStatus={formData.healthStatus}
-                notes={formData.notes || ""}
+                diagnosis={diagnosis}
               />
             )}
         </>
