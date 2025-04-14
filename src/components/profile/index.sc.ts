@@ -136,7 +136,7 @@ export const StatLabel = styled.div`
 export const LogoutButton = styled.button`
   width: 100%;
   padding: 0.9rem;
-  background-color: #e53e3e;
+  background-color: ${theme.colors.palette.bigFootFeet};
   color: white;
   border: none;
   border-radius: 8px;
