@@ -41,8 +41,6 @@ const PlantInfoView: React.FC<PlantInfoViewProps> = ({
     if (!plantName || dataFetched) return;
 
     try {
-      console.log("Fetching plant details for:", plantName);
-
       // Include health status and notes if plant isn't in good health
       const needsDiagnosis =
         formData.healthStatus &&

@@ -135,7 +135,6 @@ export default function AddedNewPlantForm() {
       const result = await addPlant(plantToSubmit);
 
       if (result) {
-        console.log("Plant added successfully:", result);
         setShowSuccessDialog(true);
       } else {
         console.error("Failed to add plant");
