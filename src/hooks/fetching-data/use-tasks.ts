@@ -75,7 +75,7 @@ export const useTasks = () => {
 
       const lastRepottedDate = plant.lastRepotted.toDate();
       const dueDate = new Date(lastRepottedDate);
-      dueDate.setMonth(dueDate.getMonth() - plant.repottingFrequency + 0.1);
+      dueDate.setMonth(dueDate.getMonth() - plant.repottingFrequency + 0.5);
 
       // Add months to the due date based on repotting frequency (in months)
       dueDate.setMonth(dueDate.getMonth() + plant.repottingFrequency);
