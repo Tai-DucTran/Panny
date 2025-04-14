@@ -8,6 +8,7 @@ import {
   generateRepottingTaskFromPlant, // Add this import
   Task,
   TaskStatus,
+  TaskType,
 } from "@/models/tasks";
 
 interface TaskState {
@@ -18,6 +19,8 @@ interface TaskState {
   completeTask: (taskId: string) => void;
   getPendingTasks: () => Task[];
   getCompletedTasks: () => Task[];
+  hasWatered?: boolean;
+  hasRepotted?: boolean;
 }
 
 export const useTaskStore = create<TaskState>((set, get) => ({
@@ -62,11 +65,18 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     const { tasks } = get();
     const updatedTasks = tasks.map((task) => {
       if (task.id === taskId) {
+        const taskType = task.taskType;
         return {
           ...task,
           status: TaskStatus.COMPLETED,
           completed: true,
           completedAt: Timestamp.now(),
+          ...(taskType === TaskType.WATERING && {
+            hasWatered: true,
+          }),
+          ...(taskType === TaskType.REPOTTING && {
+            hasRepotted: true,
+          }),
         };
       }
       return task;
