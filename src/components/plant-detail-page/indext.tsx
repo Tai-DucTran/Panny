@@ -22,6 +22,7 @@ import {
 import { formatTimestamp } from "@/utils/timestamp-utils";
 import { AppBar } from "../app-bar/indext";
 import Spacer from "../utils/spacer/spacer";
+import { toTitleCase } from "@/utils/string-utils";
 
 interface PlantDetailsProps {
   plantId: string;
@@ -131,12 +132,18 @@ const PlantDetails: React.FC<PlantDetailsProps> = ({ plantId }) => {
         </InfoContainer>
       </TopFold>
 
+      <Spacer size={24} />
+
       <DetailsSection>
         <SectionTitle>Sunlight Needs</SectionTitle>
         <DetailItem>
-          <DetailItemValue>{plant.sunlightNeeds || "Unknown"}</DetailItemValue>
+          <DetailItemValue>
+            {toTitleCase(plant.sunlightNeeds) || "Unknown"}
+          </DetailItemValue>
         </DetailItem>
       </DetailsSection>
+
+      <Spacer size={24} />
 
       <DetailsSection>
         <SectionTitle>Sensitivity Factors</SectionTitle>
@@ -144,7 +151,7 @@ const PlantDetails: React.FC<PlantDetailsProps> = ({ plantId }) => {
           {plant.sensitivityFactors && plant.sensitivityFactors.length > 0 ? (
             plant.sensitivityFactors.map((factor, index) => (
               <DetailItem key={index}>
-                <DetailItemValue>{factor}</DetailItemValue>
+                <DetailItemValue>{toTitleCase(factor)}</DetailItemValue>
               </DetailItem>
             ))
           ) : (

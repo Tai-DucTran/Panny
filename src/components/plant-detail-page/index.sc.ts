@@ -7,6 +7,7 @@ export const TopFold = styled.div`
   padding: 1rem;
   background-color: #f9f9f9;
   border-bottom: 1px solid #eaeaea;
+  border-radius: 8px;
 `;
 
 export const ImageContainer = styled.div`
@@ -71,7 +72,6 @@ export const HealthStatusBadge = styled.span.withConfig({
 `;
 
 export const DetailsSection = styled.section`
-  padding: 1rem;
   border-bottom: 1px solid #eaeaea;
 `;
 
