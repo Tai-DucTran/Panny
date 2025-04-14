@@ -1,3 +1,4 @@
+"use client";
 import GardenList from "@/components/garden-page/garden-list";
 import Spacer from "@/components/utils/spacer/spacer";
 
