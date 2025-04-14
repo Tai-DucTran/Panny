@@ -42,7 +42,6 @@ export const useTasks = () => {
     [generateTaskId]
   );
 
-  // Generate all tasks from plants
   const generateAllTasks = useCallback(() => {
     // Create an array to hold all new tasks
     const newTasks: Task[] = [];
@@ -55,8 +54,9 @@ export const useTasks = () => {
       }
     });
 
-    // Keep track of completed tasks by ID
+    // Keep track of completed tasks by ID using the tasks state from the hook's scope
     const completedTaskMap = new Map<string, Task>();
+    // This reads the 'tasks' state available in the current render's scope
     tasks.forEach((task) => {
       if (task.status === TaskStatus.COMPLETED) {
         completedTaskMap.set(task.id, task);
@@ -71,14 +71,16 @@ export const useTasks = () => {
           ...task,
           status: TaskStatus.COMPLETED,
           completed: true,
-          completedAt: completedTask.completedAt || Timestamp.now(),
+          completedAt: completedTask.completedAt || Timestamp.now(), // Ensure completedAt is preserved
         };
       }
       return task;
     });
 
     return finalTasks;
-  }, [plants, tasks, generateWateringTask]);
+    // V-- Remove `tasks` from this dependency array --V
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plants, generateWateringTask]);
 
   // Load data and generate tasks
   useEffect(() => {
