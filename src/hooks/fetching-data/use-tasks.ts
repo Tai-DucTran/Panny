@@ -53,7 +53,7 @@ export const useTasks = () => {
 
           // Set due date to one week from now
           const dueDate = new Date();
-          dueDate.setDate(dueDate.getDate() + 7);
+          dueDate.setDate(dueDate.getDate());
 
           return {
             id: generateTaskId(plant.id, TaskType.REPOTTING, nowTimestamp),
@@ -75,6 +75,7 @@ export const useTasks = () => {
 
       const lastRepottedDate = plant.lastRepotted.toDate();
       const dueDate = new Date(lastRepottedDate);
+      dueDate.setMonth(dueDate.getMonth() - plant.repottingFrequency + 0.1);
 
       // Add months to the due date based on repotting frequency (in months)
       dueDate.setMonth(dueDate.getMonth() + plant.repottingFrequency);
@@ -105,6 +106,7 @@ export const useTasks = () => {
 
       // Also generate repotting tasks
       const repottingTask = generateRepottingTask(plant);
+      console.log("DEBUG in useTask - repottingTask", repottingTask);
       if (repottingTask) {
         newTasks.push(repottingTask);
       }
