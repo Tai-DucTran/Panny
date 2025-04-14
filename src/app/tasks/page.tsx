@@ -86,8 +86,6 @@ const TasksPage = () => {
     return <LoadingSpinner size="large" />;
   }
 
-  console.log("DEBUG in TasksPage - tasks", tasks);
-
   return (
     <>
       <AppBar title="Take Care List" />

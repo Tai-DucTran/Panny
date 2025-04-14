@@ -57,7 +57,6 @@ const PlantInfoView: React.FC<PlantInfoViewProps> = ({
       );
 
       if (response) {
-        console.log("Plant details received:", response);
         setPlantDescription(response.description);
 
         // Calculate lastRepotted date for newly purchased plants

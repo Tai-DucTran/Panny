@@ -131,8 +131,6 @@ export default function AddedNewPlantForm() {
         origin: formData.origin || "",
       };
 
-      console.log("Submitting plant:", plantToSubmit);
-
       // Add plant to Firestore via our Zustand store
       const result = await addPlant(plantToSubmit);
 
