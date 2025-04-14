@@ -34,6 +34,8 @@ export const PlantTaskCard: React.FC<PlantTaskCardProps> = ({
     // Note: The task will disappear from this list on next render if task state updates correctly
   };
 
+  console.log("DEBUG in PlantTaskCard - plant", plant);
+
   return (
     <SC.CardWrapper>
       {/* Plant Info Section (remains the same) */}

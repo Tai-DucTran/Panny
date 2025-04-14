@@ -23,6 +23,17 @@ interface StepOneProps {
 }
 
 const StepOne: React.FC<StepOneProps> = ({ formData, updateFormData }) => {
+  const handleAcquiredTimeChange = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    const acquiredTimeOption = e.target.value as AcquiredTimeOption;
+
+    // Just update the form data with the selected option
+    updateFormData({
+      acquiredTimeOption: acquiredTimeOption,
+    });
+  };
+
   return (
     <StepContainer>
       <StepTitle>General Information</StepTitle>
@@ -46,11 +57,7 @@ const StepOne: React.FC<StepOneProps> = ({ formData, updateFormData }) => {
         <StyledSelect
           id="acquiredTimeOption"
           value={formData.acquiredTimeOption || AcquiredTimeOption.JUST_BOUGHT}
-          onChange={(e) =>
-            updateFormData({
-              acquiredTimeOption: e.target.value as AcquiredTimeOption,
-            })
-          }
+          onChange={handleAcquiredTimeChange}
         >
           <option value={AcquiredTimeOption.JUST_BOUGHT}>
             {`I've just bought it`}

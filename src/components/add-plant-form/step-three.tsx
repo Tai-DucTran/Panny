@@ -25,6 +25,7 @@ import {
   dateStringToTimestamp,
 } from "@/utils/timestamp-utils";
 import { theme } from "@/styles/theme";
+import { AcquiredTimeOption } from "./step-one";
 
 interface StepThreeProps {
   formData: Partial<Plant>;
@@ -100,6 +101,10 @@ const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
 
   const selectedRepottingOption = getSelectedRepottingOption();
 
+  // Check if the plant was just bought
+  const isNewlyBought =
+    formData.acquiredTimeOption === AcquiredTimeOption.JUST_BOUGHT;
+
   return (
     <StepContainer>
       <StepTitle>Care Information</StepTitle>
@@ -154,33 +159,36 @@ const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
         </CheckboxGroup>
       </FormGroup>
 
-      <FormGroup>
-        <StyledLabel htmlFor="repottingTime">
-          When was the last time you repotted this plant?
-        </StyledLabel>
-        <StyledSelect
-          id="repottingTime"
-          value={selectedRepottingOption}
-          onChange={handleRepottingTimeChange}
-        >
-          <option value={RepottingTimeOption.THIS_WEEK}>
-            {`I've repotted it this week`}
-          </option>
-          <option value={RepottingTimeOption.LAST_MONTH}>Last month</option>
-          <option value={RepottingTimeOption.THREE_MONTHS_AGO}>
-            3 months ago
-          </option>
-          <option value={RepottingTimeOption.SIX_MONTHS_AGO}>
-            6 months ago
-          </option>
-          <option value={RepottingTimeOption.TWELVE_MONTHS_AGO}>
-            12 months ago
-          </option>
-          <option value={RepottingTimeOption.NEVER}>
-            I never did that within the last 12 months
-          </option>
-        </StyledSelect>
-      </FormGroup>
+      {/* Show repotting question only if plant was not just bought */}
+      {!isNewlyBought && (
+        <FormGroup>
+          <StyledLabel htmlFor="repottingTime">
+            When was the last time you repotted this plant?
+          </StyledLabel>
+          <StyledSelect
+            id="repottingTime"
+            value={selectedRepottingOption}
+            onChange={handleRepottingTimeChange}
+          >
+            <option value={RepottingTimeOption.THIS_WEEK}>
+              {`I've repotted it this week`}
+            </option>
+            <option value={RepottingTimeOption.LAST_MONTH}>Last month</option>
+            <option value={RepottingTimeOption.THREE_MONTHS_AGO}>
+              3 months ago
+            </option>
+            <option value={RepottingTimeOption.SIX_MONTHS_AGO}>
+              6 months ago
+            </option>
+            <option value={RepottingTimeOption.TWELVE_MONTHS_AGO}>
+              12 months ago
+            </option>
+            <option value={RepottingTimeOption.NEVER}>
+              I never did that within the last 12 months
+            </option>
+          </StyledSelect>
+        </FormGroup>
+      )}
 
       <FormGroup>
         <StyledLabel

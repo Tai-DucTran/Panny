@@ -1,4 +1,3 @@
-// src/hooks/use-tasks.ts
 import { useEffect, useState, useCallback } from "react";
 import { Task, TaskStatus, TaskType } from "@/models/tasks";
 import { usePlantStore } from "@/store/plant-store";
@@ -42,6 +41,57 @@ export const useTasks = () => {
     [generateTaskId]
   );
 
+  // Generate repotting task from plant
+  const generateRepottingTask = useCallback(
+    (plant: Plant): Task | null => {
+      // If we don't have lastRepotted information yet, check if this is a newly bought plant
+      if (!plant.lastRepotted && !plant.repottingFrequency) {
+        // If it's a newly acquired plant, we should suggest repotting within a week
+        if (plant.acquiredTimeOption === "just_bought") {
+          // Create a timestamp for now to use as a base for the ID
+          const nowTimestamp = Timestamp.now();
+
+          // Set due date to one week from now
+          const dueDate = new Date();
+          dueDate.setDate(dueDate.getDate() + 7);
+
+          return {
+            id: generateTaskId(plant.id, TaskType.REPOTTING, nowTimestamp),
+            plantId: plant.id,
+            plantName: plant.name,
+            plantImageUrl: plant.imageUrl,
+            taskType: TaskType.REPOTTING,
+            dueDate: Timestamp.fromDate(dueDate),
+            status: TaskStatus.PENDING,
+          };
+        }
+        return null;
+      }
+
+      // Handle regular repotting schedule based on lastRepotted and frequency
+      if (!plant.lastRepotted || !plant.repottingFrequency) {
+        return null;
+      }
+
+      const lastRepottedDate = plant.lastRepotted.toDate();
+      const dueDate = new Date(lastRepottedDate);
+
+      // Add months to the due date based on repotting frequency (in months)
+      dueDate.setMonth(dueDate.getMonth() + plant.repottingFrequency);
+
+      return {
+        id: generateTaskId(plant.id, TaskType.REPOTTING, plant.lastRepotted),
+        plantId: plant.id,
+        plantName: plant.name,
+        plantImageUrl: plant.imageUrl,
+        taskType: TaskType.REPOTTING,
+        dueDate: Timestamp.fromDate(dueDate),
+        status: TaskStatus.PENDING,
+      };
+    },
+    [generateTaskId]
+  );
+
   const generateAllTasks = useCallback(() => {
     // Create an array to hold all new tasks
     const newTasks: Task[] = [];
@@ -51,6 +101,12 @@ export const useTasks = () => {
       const wateringTask = generateWateringTask(plant);
       if (wateringTask) {
         newTasks.push(wateringTask);
+      }
+
+      // Also generate repotting tasks
+      const repottingTask = generateRepottingTask(plant);
+      if (repottingTask) {
+        newTasks.push(repottingTask);
       }
     });
 
@@ -78,9 +134,8 @@ export const useTasks = () => {
     });
 
     return finalTasks;
-    // V-- Remove `tasks` from this dependency array --V
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plants, generateWateringTask]);
+  }, [plants, generateWateringTask, generateRepottingTask]);
 
   // Load data and generate tasks
   useEffect(() => {

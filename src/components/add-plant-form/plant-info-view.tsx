@@ -17,6 +17,8 @@ import { usePlantInfo } from "@/hooks/fetching-data/use-plant-info";
 import { LoadingSpinner } from "@/components/spinner";
 import ReactMarkdown from "react-markdown";
 import TakeCareRecommendation from "./take-care-recommendation";
+import { Timestamp } from "firebase/firestore";
+import { AcquiredTimeOption } from "./step-one";
 
 interface PlantInfoViewProps {
   plantName: string;
@@ -58,6 +60,18 @@ const PlantInfoView: React.FC<PlantInfoViewProps> = ({
         console.log("Plant details received:", response);
         setPlantDescription(response.description);
 
+        // Calculate lastRepotted date for newly purchased plants
+        let lastRepottedDate;
+        if (
+          formData.acquiredTimeOption === AcquiredTimeOption.JUST_BOUGHT &&
+          response.plantData.repottingFrequency
+        ) {
+          // For newly purchased plants, set lastRepotted to current date + 1 month
+          const now = new Date();
+          now.setMonth(now.getMonth() + 1);
+          lastRepottedDate = Timestamp.fromDate(now);
+        }
+
         // Merge the AI data with user data
         updateFormData({
           ...response.plantData,
@@ -70,6 +84,7 @@ const PlantInfoView: React.FC<PlantInfoViewProps> = ({
           acquiredTimeOption: formData.acquiredTimeOption,
           healthStatus: formData.healthStatus, // Keep user-provided health status
           notes: formData.notes, // Keep user-provided notes
+          lastRepotted: lastRepottedDate || formData.lastRepotted,
         });
 
         // If we received diagnosis information, set it in the TakeCareRecommendation component
