@@ -20,9 +20,11 @@ import {
   PlantLocationType,
   LightExposure,
   HealthStatus,
+  CareDifficulty,
 } from "@/models/plant";
 import { useState } from "react";
 import { Timestamp } from "firebase/firestore";
+import { usePlantStore } from "@/store/plant-store";
 
 export default function AddedNewPlantForm() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -40,14 +42,16 @@ export default function AddedNewPlantForm() {
     healthStatus: HealthStatus.GOOD,
     healthHistory: [
       {
-        date: Timestamp.now(), // Using Timestamp.now() instead of new Date()
+        date: Timestamp.now(),
         status: HealthStatus.GOOD,
       },
     ],
   });
 
-  const { fetchPlantInfo, loading } = usePlantInfo();
+  const { fetchPlantInfo, loading: loadingPlantInfo } = usePlantInfo();
+  const { addPlant, isLoading: isSubmitting } = usePlantStore();
   const [plantDescription, setPlantDescription] = useState("");
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
   const updateFormData = (data: Partial<Plant>) => {
     setFormData((prev) => ({ ...prev, ...data }));
@@ -85,21 +89,40 @@ export default function AddedNewPlantForm() {
       setCurrentStep(currentStep + 1);
     } else {
       // On final submit
-      const newPlant: Plant = {
+      await onSubmit();
+    }
+  };
+
+  const onSubmit = async () => {
+    if (formSubmitted) return; // Prevent multiple submissions
+    setFormSubmitted(true);
+
+    try {
+      // Ensure we have required fields
+      if (
+        !formData.name ||
+        !formData.careDifficulty ||
+        !formData.sunlightNeeds ||
+        !formData.humidityPreference
+      ) {
+        throw new Error("Missing required plant information");
+      }
+
+      const plantToSubmit: Plant = {
         id: Date.now().toString(),
         name: formData.name || "",
         species: formData.species || formData.name || "",
-        nickname: formData.nickname,
-        imageUrl: formData.imageUrl,
+        nickname: formData.nickname || "",
+        imageUrl: formData.imageUrl || "",
         acquiredTimeOption:
           formData.acquiredTimeOption || AcquiredTimeOption.JUST_BOUGHT,
         location: formData.location || {
           type: PlantLocationType.INDOOR,
         },
-        careDifficulty: formData.careDifficulty!,
+        careDifficulty: formData.careDifficulty || CareDifficulty.MODERATE,
         sensitivityFactors: formData.sensitivityFactors || [],
         wateringFrequency: formData.wateringFrequency || 7,
-        lastWatered: formData.lastWatered, // Already using Timestamp
+        lastWatered: formData.lastWatered || Timestamp.now(),
         sunlightNeeds: formData.sunlightNeeds!,
         humidityPreference: formData.humidityPreference!,
         temperature: formData.temperature || {
@@ -108,30 +131,37 @@ export default function AddedNewPlantForm() {
           ideal: 22,
         },
         soilType: formData.soilType || [],
-        lastRepotted: formData.lastRepotted, // Already using Timestamp
+        lastRepotted: formData.lastRepotted || Timestamp.now(),
         repottingFrequency: formData.repottingFrequency || 12,
         healthStatus: formData.healthStatus || HealthStatus.GOOD,
         healthHistory: formData.healthHistory || [
           {
-            date: Timestamp.now(), // Using Timestamp.now instead of new Date()
+            date: Timestamp.now(),
             status: HealthStatus.GOOD,
           },
         ],
-        notes: formData.notes,
+        notes: formData.notes || "",
         toxicity: formData.toxicity,
         growthHabit: formData.growthHabit,
-        origin: formData.origin,
+        origin: formData.origin || "",
       };
 
-      onSubmit(newPlant);
-    }
-  };
+      console.log("Submitting plant:", plantToSubmit);
 
-  const onSubmit = (newPlant: Plant) => {
-    console.log("DEBUG in creating new plant", newPlant);
-    // Here you would typically save the plant to your database or state
-    // For now, just show the success dialog
-    setShowSuccessDialog(true);
+      // Add plant to Firestore via our Zustand store
+      const result = await addPlant(plantToSubmit);
+
+      if (result) {
+        console.log("Plant added successfully:", result);
+        setShowSuccessDialog(true);
+      } else {
+        console.error("Failed to add plant");
+        setFormSubmitted(false);
+      }
+    } catch (error) {
+      console.error("Error submitting plant:", error);
+      setFormSubmitted(false);
+    }
   };
 
   const handleBack = () => {
@@ -139,6 +169,8 @@ export default function AddedNewPlantForm() {
       setCurrentStep(currentStep - 1);
     }
   };
+
+  const isLoading = loadingPlantInfo || isSubmitting;
 
   return (
     <StyledFormContainer>
@@ -170,7 +202,12 @@ export default function AddedNewPlantForm() {
 
       <ButtonContainer>
         {currentStep > 1 && (
-          <StyledButton type="button" onClick={handleBack} variant="secondary">
+          <StyledButton
+            type="button"
+            onClick={handleBack}
+            variant="secondary"
+            disabled={isLoading}
+          >
             Back
           </StyledButton>
         )}
@@ -178,10 +215,18 @@ export default function AddedNewPlantForm() {
         <StyledButton
           type="button"
           onClick={handleNext}
-          disabled={(currentStep === 1 && !formData.name) || loading}
+          disabled={
+            (currentStep === 1 && !formData.name) || isLoading || formSubmitted
+          }
           variant="primary"
         >
-          {loading ? "Loading..." : currentStep === 3 ? "Add Plant" : "Next"}
+          {isLoading ? (
+            <>Loading...</>
+          ) : currentStep === 3 ? (
+            "Add Plant"
+          ) : (
+            "Next"
+          )}
         </StyledButton>
       </ButtonContainer>
 

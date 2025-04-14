@@ -1,6 +1,5 @@
 "use client";
 
-import { Plant } from "@/models/plant";
 import { PlantCard } from "../plant-card";
 import {
   AddPlantButton,
@@ -9,18 +8,32 @@ import {
   EmptyTitle,
   ListOfItems,
 } from "./index.sc";
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePlantStore } from "@/store/plant-store";
+import { LoadingSpinner } from "@/components/spinner";
 
 export default function GardenList() {
-  const listOfPlants: Plant[] = [];
+  const { plants, fetchPlants, isLoading } = usePlantStore();
 
-  if (listOfPlants.length > 0) {
+  useEffect(() => {
+    const loadPlants = async () => {
+      await fetchPlants();
+    };
+
+    loadPlants();
+  }, [fetchPlants]);
+
+  if (isLoading) {
+    return <LoadingSpinner size="large" />;
+  }
+
+  if (plants.length > 0) {
     return (
       <ListOfItems>
-        {listOfPlants.map((plant, index) => (
-          <PlantCard key={index} plant={plant} />
+        {plants.map((plant) => (
+          <PlantCard key={plant.id} plant={plant} />
         ))}
       </ListOfItems>
     );
