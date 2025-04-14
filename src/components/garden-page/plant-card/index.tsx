@@ -106,6 +106,7 @@ export const PlantCard = ({ plant }: { plant: Plant }) => {
               objectPosition: "center",
             }}
             loading="lazy"
+            priority={false}
           />
 
           {/* Health status indicator */}

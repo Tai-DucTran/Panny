@@ -7,7 +7,6 @@ import {
   getDocs,
   query,
   where,
-  orderBy,
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/services/firebase/firebase-config";
@@ -52,11 +51,11 @@ export const usePlantStore = create<PlantState>((set, get) => ({
         throw new Error("User not authenticated");
       }
 
-      // Query plants for the current user
+      // Query plants for the current user - removed orderBy to avoid needing an index
       const plantsQuery = query(
         collection(db, PLANTS_COLLECTION),
-        where("userId", "==", currentUser.uid),
-        orderBy("createdAt", "desc")
+        where("userId", "==", currentUser.uid)
+        // Removed the orderBy clause to fix the indexing issue
       );
 
       const querySnapshot = await getDocs(plantsQuery);
@@ -70,7 +69,15 @@ export const usePlantStore = create<PlantState>((set, get) => ({
         } as Plant;
       });
 
-      set({ plants, isLoading: false });
+      // Sort plants client-side instead of using Firestore's orderBy
+      // This is a temporary solution until you create the composite index
+      const sortedPlants = plants.sort((a, b) => {
+        const dateA = a.createdAt?.toDate?.() || new Date(0);
+        const dateB = b.createdAt?.toDate?.() || new Date(0);
+        return dateB.getTime() - dateA.getTime(); // Descending order (newest first)
+      });
+
+      set({ plants: sortedPlants, isLoading: false });
     } catch (error) {
       console.error("Error fetching plants:", error);
       set({

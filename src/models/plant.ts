@@ -41,6 +41,11 @@ export interface Plant {
   toxicity?: ToxicityLevel;
   growthHabit?: GrowthHabit;
   origin?: string;
+
+  // Timestamps for document tracking
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
+  userId?: string;
 }
 
 export enum SunlightLevel {
