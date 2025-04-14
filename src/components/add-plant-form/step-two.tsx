@@ -1,38 +1,46 @@
 import React from "react";
-
 import {
   StepContainer,
   FormGroup,
   StyledLabel,
   StyledSelect,
   StepTitle,
-  PlantDescription,
+  StyledInput,
 } from "./index.sc";
 
 import { LightExposure, Plant, PlantLocationType } from "@/models/plant";
-import { StyledInput } from "./index.sc";
 
 interface StepTwoProps {
   formData: Partial<Plant>;
   updateFormData: (data: Partial<Plant>) => void;
-  plantDescription: string;
 }
 
-const StepTwo: React.FC<StepTwoProps> = ({
-  formData,
-  updateFormData,
-  plantDescription,
-}) => {
+const StepTwo: React.FC<StepTwoProps> = ({ formData, updateFormData }) => {
+  // Helper function to safely update location properties
+  const updateLocation = (
+    updates: Partial<{
+      type: PlantLocationType;
+      room: string;
+      lightExposure: LightExposure;
+      city: string;
+      country: string;
+    }>
+  ) => {
+    const currentLocation = formData.location || {
+      type: PlantLocationType.INDOOR,
+    };
+
+    updateFormData({
+      location: {
+        ...currentLocation,
+        ...updates,
+      },
+    });
+  };
+
   return (
     <StepContainer>
       <StepTitle>Current Condition</StepTitle>
-
-      {plantDescription && (
-        <PlantDescription>
-          <h4>About {formData.name}</h4>
-          <p>{plantDescription}</p>
-        </PlantDescription>
-      )}
 
       <FormGroup>
         <StyledLabel htmlFor="locationType">
@@ -42,12 +50,7 @@ const StepTwo: React.FC<StepTwoProps> = ({
           id="locationType"
           value={formData.location?.type || PlantLocationType.INDOOR}
           onChange={(e) =>
-            updateFormData({
-              location: {
-                ...formData.location,
-                type: e.target.value as PlantLocationType,
-              },
-            })
+            updateLocation({ type: e.target.value as PlantLocationType })
           }
         >
           <option value={PlantLocationType.INDOOR}>Indoor</option>
@@ -61,15 +64,7 @@ const StepTwo: React.FC<StepTwoProps> = ({
           id="room"
           type="text"
           value={formData.location?.room || ""}
-          onChange={(e) =>
-            updateFormData({
-              location: {
-                type: formData.location?.type || PlantLocationType.INDOOR,
-                ...formData.location,
-                room: e.target.value,
-              },
-            })
-          }
+          onChange={(e) => updateLocation({ room: e.target.value })}
           placeholder="e.g., Living Room, Balcony"
         />
       </FormGroup>
@@ -82,13 +77,7 @@ const StepTwo: React.FC<StepTwoProps> = ({
           id="lightExposure"
           value={formData.location?.lightExposure || LightExposure.MEDIUM}
           onChange={(e) =>
-            updateFormData({
-              location: {
-                type: formData.location?.type || PlantLocationType.INDOOR,
-                ...formData.location,
-                lightExposure: e.target.value as LightExposure,
-              },
-            })
+            updateLocation({ lightExposure: e.target.value as LightExposure })
           }
         >
           <option value={LightExposure.LOW}>Low Light</option>
@@ -104,15 +93,7 @@ const StepTwo: React.FC<StepTwoProps> = ({
           id="city"
           type="text"
           value={formData.location?.city || ""}
-          onChange={(e) =>
-            updateFormData({
-              location: {
-                type: formData.location?.type || PlantLocationType.INDOOR,
-                ...formData.location,
-                city: e.target.value,
-              },
-            })
-          }
+          onChange={(e) => updateLocation({ city: e.target.value })}
           placeholder="e.g., New York"
         />
       </FormGroup>
@@ -123,15 +104,7 @@ const StepTwo: React.FC<StepTwoProps> = ({
           id="country"
           type="text"
           value={formData.location?.country || ""}
-          onChange={(e) =>
-            updateFormData({
-              location: {
-                type: formData.location?.type || PlantLocationType.INDOOR,
-                ...formData.location,
-                country: e.target.value,
-              },
-            })
-          }
+          onChange={(e) => updateLocation({ country: e.target.value })}
           placeholder="e.g., United States"
         />
       </FormGroup>

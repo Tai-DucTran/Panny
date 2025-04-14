@@ -112,7 +112,7 @@ const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
           type="number"
           min="1"
           max="90"
-          value={formData.wateringFrequency || 7}
+          value={formData.wateringFrequency || 2}
           onChange={(e) =>
             updateFormData({
               wateringFrequency: parseInt(e.target.value),
