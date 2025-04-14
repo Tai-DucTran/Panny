@@ -34,14 +34,26 @@ const PlantDetails: React.FC<PlantDetailsProps> = ({ plantId }) => {
   const [plant, setPlant] = useState<Plant | null>(null);
 
   useEffect(() => {
+    const findPlantInStore = () => {
+      // First check if the plant is already in the Zustand store
+      const foundPlant = plants.find((p) => p.id === plantId);
+      if (foundPlant) {
+        setPlant(foundPlant);
+        return true;
+      }
+      return false;
+    };
+
     const loadPlant = async () => {
+      // Try to find the plant in the store first
+      if (findPlantInStore()) return;
+
+      // If plants array is empty, fetch plants
       if (plants.length === 0) {
         await fetchPlants();
+        // After fetching, check again if we can find the plant
+        findPlantInStore();
       }
-
-      // Find the plant with the matching ID
-      const foundPlant = plants.find((p) => p.id === plantId);
-      setPlant(foundPlant || null);
     };
 
     loadPlant();
