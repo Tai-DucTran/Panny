@@ -216,7 +216,7 @@ export const CancelButton = styled.button`
 
 export const ConfirmButton = styled.button`
   padding: 0.6rem 1.2rem;
-  background-color: #e53e3e;
+  background-color: ${theme.colors.palette.bigFootFeet};
   color: white;
   border: none;
   border-radius: 6px;
@@ -230,5 +230,70 @@ export const ConfirmButton = styled.button`
 
   &:hover {
     background-color: #c53030;
+  }
+`;
+
+export const FeedbackText = styled.p`
+  color: ${theme.colors.palette.darkCharcoal};
+  line-height: 1.5;
+  margin-bottom: 1.2rem;
+  font-size: 0.95rem;
+`;
+
+export const ActionButton = styled.button`
+  background-color: ${theme.colors.palette.russianGreen};
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background-color: ${theme.colors.palette.darkCharcoal};
+    transform: translateY(-2px);
+  }
+`;
+
+export const WhitelistForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+`;
+
+export const WhitelistInput = styled.input`
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+
+  &:focus {
+    outline: none;
+    border-color: ${theme.colors.palette.russianGreen};
+    box-shadow: 0 0 0 2px ${theme.colors.palette.darkCharcoal};
+  }
+`;
+
+export const WhitelistButton = styled.button`
+  background-color: ${theme.colors.palette.russianGreen};
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.75rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: ${theme.colors.palette.darkCharcoal};
+    transform: translateY(-2px);
   }
 `;

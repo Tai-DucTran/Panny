@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import { theme } from "@/styles/theme";
+import Link from "next/link";
 
 export const EmptyContainer = styled.div`
   display: flex;
@@ -24,7 +25,7 @@ export const EmptyText = styled.p`
   line-height: 1.5;
 `;
 
-export const AddPlantButton = styled.a`
+export const AddPlantButton = styled(Link)`
   display: inline-block;
   background-color: ${theme.colors.palette.russianGreen};
   color: white;

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Image from "next/image";
 import {
   AddPlantButton,
@@ -31,9 +30,9 @@ const EmptyTasks: React.FC<EmptyTasksProps> = ({ hasPlants }) => {
       </EmptyText>
 
       {!hasPlants && (
-        <Link href="/add-new-plant" passHref legacyBehavior>
-          <AddPlantButton>Add Your First Plant</AddPlantButton>
-        </Link>
+        <AddPlantButton href="/add-new-plant">
+          Add Your First Plant
+        </AddPlantButton>
       )}
     </EmptyContainer>
   );

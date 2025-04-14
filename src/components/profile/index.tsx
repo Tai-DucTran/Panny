@@ -120,6 +120,46 @@ const ProfileComponent: React.FC = () => {
         </S.StatisticsGrid>
       </S.ProfileSection>
 
+      <S.ProfileSection>
+        <S.SectionTitle>Join Our Whitelist</S.SectionTitle>
+        <S.FeedbackText>
+          Get early access to upcoming features and be the first to try new
+          plant care tools.
+        </S.FeedbackText>
+        <S.WhitelistForm
+          onSubmit={(e) => {
+            e.preventDefault();
+            alert(
+              "Thanks for joining our whitelist! We'll notify you when new features are available."
+            );
+          }}
+        >
+          <S.WhitelistInput
+            type="email"
+            placeholder="Your email address"
+            defaultValue={user.email || ""}
+            required
+          />
+          <S.WhitelistButton type="submit">Join Whitelist</S.WhitelistButton>
+        </S.WhitelistForm>
+      </S.ProfileSection>
+
+      <S.ProfileSection>
+        <S.SectionTitle>Feedback & Suggestions</S.SectionTitle>
+        <S.FeedbackText>
+          Help us improve Panny by sharing your ideas or reporting any issues
+          you encounter.
+        </S.FeedbackText>
+        <S.ActionButton
+          onClick={() =>
+            (window.location.href =
+              "mailto:support@pannyapp.com?subject=Panny Feedback")
+          }
+        >
+          Send Feedback
+        </S.ActionButton>
+      </S.ProfileSection>
+
       <Spacer size={20} />
 
       <S.LogoutButton onClick={handleLogoutClick} disabled={isLoggingOut}>

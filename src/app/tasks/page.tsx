@@ -1,26 +1,20 @@
 "use client";
 import { usePlantStore } from "@/store/plant-store";
 import { useTasks } from "@/hooks/fetching-data/use-tasks";
-
 import { Task, TaskStatus } from "@/models/tasks";
-
-import { useEffect, useMemo } from "react";
-import {
-  EmptyTasksMessage,
-  TaskListContainer,
-} from "@/components/task-list/index.sc";
+import { useEffect, useMemo, useState } from "react";
+import { TaskListContainer } from "@/components/task-list/index.sc";
 import { Timestamp } from "firebase/firestore";
-import { LoadingSpinner } from "@/components/spinner";
 import { PlantTaskCard } from "@/components/task-list";
 import { AppBar } from "@/components/app-bar/indext";
 import Spacer from "@/components/utils/spacer/spacer";
+import EmptyTasks from "@/components/task-list/empty-task";
 
 // Helper function to find the earliest due date for a plant's tasks
 const getEarliestDueDate = (tasks: Task[]): Timestamp | null => {
   if (!tasks || tasks.length === 0) {
     return null;
   }
-  // Sort tasks by due date ascending and return the first one's dueDate
   return tasks.reduce((earliest, current) => {
     if (!earliest) return current.dueDate;
     return current.dueDate.toMillis() < earliest.toMillis()
@@ -30,12 +24,21 @@ const getEarliestDueDate = (tasks: Task[]): Timestamp | null => {
 };
 
 const TasksPage = () => {
-  const { plants, fetchPlants, isLoading: plantsLoading } = usePlantStore();
-  const { tasks, isLoading: tasksLoading, completeTask } = useTasks();
+  const { plants, fetchPlants } = usePlantStore();
+  const { tasks, completeTask } = useTasks();
+  const [isTimeoutOccurred] = useState(false);
 
   useEffect(() => {
+    const loadPlants = async () => {
+      try {
+        await fetchPlants();
+      } catch (error) {
+        console.error("Error fetching plants:", error);
+      }
+    };
+
     if (plants.length === 0) {
-      fetchPlants();
+      loadPlants();
     }
   }, [fetchPlants, plants.length]);
 
@@ -53,12 +56,14 @@ const TasksPage = () => {
     return grouped;
   }, [tasks]);
 
-  // --- MODIFIED useMemo for plantsWithPendingTasks ---
   const plantsWithPendingTasks = useMemo(() => {
     // Filter plants first
     const filteredPlants = plants.filter(
       (plant) => pendingTasksByPlant[plant.id]?.length > 0
     );
+
+    // Only sort if we have plants
+    if (filteredPlants.length === 0) return [];
 
     // Then sort the filtered plants
     filteredPlants.sort((plantA, plantB) => {
@@ -68,35 +73,29 @@ const TasksPage = () => {
       const earliestDueDateA = getEarliestDueDate(tasksA);
       const earliestDueDateB = getEarliestDueDate(tasksB);
 
-      // Handle cases where due dates might be null (shouldn't happen with filter, but good practice)
-      if (!earliestDueDateA && !earliestDueDateB) return 0; // Keep original order if both have no date
-      if (!earliestDueDateA) return 1; // Put plants with no due date last
-      if (!earliestDueDateB) return -1; // Put plants with no due date last
+      // Handle cases where due dates might be null
+      if (!earliestDueDateA && !earliestDueDateB) return 0;
+      if (!earliestDueDateA) return 1;
+      if (!earliestDueDateB) return -1;
 
       // Compare milliseconds
       return earliestDueDateA.toMillis() - earliestDueDateB.toMillis();
     });
 
-    return filteredPlants; // Return the sorted array
+    return filteredPlants;
   }, [plants, pendingTasksByPlant]);
 
-  const isLoading = plantsLoading || tasksLoading;
-
-  if (isLoading) {
-    return <LoadingSpinner size="large" />;
-  }
+  // Handle the case when the timeout occurred but we still have no data
+  const forceShowEmptyState = isTimeoutOccurred && plants.length === 0;
 
   return (
     <>
       <AppBar title="Take Care List" />
       <Spacer size={24} />
       <TaskListContainer>
-        {plantsWithPendingTasks.length === 0 ? (
-          <EmptyTasksMessage>
-            No pending tasks for your plants right now!
-          </EmptyTasksMessage>
+        {forceShowEmptyState || plantsWithPendingTasks.length === 0 ? (
+          <EmptyTasks hasPlants={plants.length > 0} />
         ) : (
-          // The map function now iterates over the *sorted* array
           plantsWithPendingTasks.map((plant) => (
             <PlantTaskCard
               key={plant.id}
