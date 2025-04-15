@@ -231,3 +231,47 @@ export const SuccessMessage = styled.p`
   font-size: 1.1rem;
   color: #666;
 `;
+
+// Add these styles to your index.sc.ts file
+
+// Camera section styles
+export const CameraSection = styled.div`
+  display: flex;
+  align-items: center;
+  margin-top: 16px;
+  padding: 12px;
+  background-color: ${theme.colors.palette.alabaster}50;
+  border-radius: 8px;
+  border: 1px dashed ${theme.colors.palette.morningBlue};
+`;
+
+export const CameraText = styled.span`
+  flex: 1;
+  font-size: 0.9rem;
+  color: ${theme.colors.palette.darkCharcoal};
+`;
+
+export const CameraButton = styled.button`
+  background-color: ${theme.colors.palette.russianGreen};
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 12px;
+
+  &:hover {
+    background-color: ${theme.colors.palette.axolotl};
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+`;

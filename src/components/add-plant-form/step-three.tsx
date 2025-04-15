@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import { Camera } from "lucide-react";
 import { Timestamp } from "firebase/firestore";
 import {
   StepContainer,
@@ -7,11 +8,11 @@ import {
   StyledSelect,
   StepTitle,
   StyledTextarea,
-  CheckboxGroup,
-  StyledCheckbox,
-  CheckboxLabel,
+  CameraSection,
+  CameraText,
+  CameraButton,
 } from "./index.sc";
-import { HealthStatus, Plant, SoilType } from "@/models/plant";
+import { HealthStatus, Plant } from "@/models/plant";
 import {
   getDefaultPlantImageURL,
   RepottingTimeOption,
@@ -20,6 +21,7 @@ import {
 } from "./helpers";
 import { theme } from "@/styles/theme";
 import { AcquiredTimeOption } from "./step-one";
+import CameraModal from "../camera-modal";
 
 // Define watering time options
 enum LastWateredOption {
@@ -37,6 +39,8 @@ interface StepThreeProps {
 }
 
 const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
+  const [showCameraModal, setShowCameraModal] = useState(false);
+
   // Handle last watered date selection
   const handleLastWateredChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const option = e.target.value as LastWateredOption;
@@ -114,18 +118,6 @@ const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
         if (diffDays < 5) return LastWateredOption.THREE_DAYS_AGO;
         return LastWateredOption.SEVEN_DAYS_AGO;
     }
-  };
-
-  const handleSoilTypeChange = (type: SoilType, checked: boolean) => {
-    let updatedSoilTypes = [...(formData.soilType || [])];
-
-    if (checked) {
-      updatedSoilTypes.push(type);
-    } else {
-      updatedSoilTypes = updatedSoilTypes.filter((t) => t !== type);
-    }
-
-    updateFormData({ soilType: updatedSoilTypes });
   };
 
   // Handle repotting time option changes - only update lastRepotted
@@ -223,25 +215,6 @@ const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
         </StyledSelect>
       </FormGroup>
 
-      <FormGroup>
-        <StyledLabel>Soil type (select all that apply):</StyledLabel>
-        <CheckboxGroup>
-          {Object.values(SoilType).map((type) => (
-            <div key={type}>
-              <StyledCheckbox
-                id={`soil-${type}`}
-                type="checkbox"
-                checked={(formData.soilType || []).includes(type as SoilType)}
-                onChange={(e) =>
-                  handleSoilTypeChange(type as SoilType, e.target.checked)
-                }
-              />
-              <CheckboxLabel htmlFor={`soil-${type}`}>{type}</CheckboxLabel>
-            </div>
-          ))}
-        </CheckboxGroup>
-      </FormGroup>
-
       {/* Show repotting question only if plant was not just bought */}
       {!isNewlyBought && (
         <FormGroup>
@@ -312,7 +285,20 @@ const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
           placeholder="Add any special notes about your current plant health..."
           rows={4}
         />
+
+        <CameraSection>
+          <CameraText>
+            Or take a photo of your plant so we can diagnose your plant health
+          </CameraText>
+          <CameraButton type="button" onClick={() => setShowCameraModal(true)}>
+            <Camera size={24} />
+          </CameraButton>
+        </CameraSection>
       </FormGroup>
+
+      {showCameraModal && (
+        <CameraModal onClose={() => setShowCameraModal(false)} />
+      )}
     </StepContainer>
   );
 };
