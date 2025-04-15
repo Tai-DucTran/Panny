@@ -166,7 +166,7 @@ const PlantDetails: React.FC<PlantDetailsProps> = ({ plantId }) => {
       <Spacer size={24} />
 
       <DetailsSection>
-        <SectionTitle>Sunlight Needs</SectionTitle>
+        <SectionTitle>{`${plant.name}'s characteristics`}</SectionTitle>
         <MarkdownContent>
           {plant.plantCharacteristicDescription}
         </MarkdownContent>
