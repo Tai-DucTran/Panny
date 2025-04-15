@@ -2,14 +2,13 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { Plant, HealthStatus } from "@/models/plant";
 import { Task, TaskStatus } from "@/models/tasks";
-import { formatDistanceToNow } from "@/utils/date-utils";
 import * as SC from "./index.sc";
-import { TaskUpdateResult } from "@/hooks/fetching-data/use-tasks";
+import { useEnhancedTaskStore } from "@/store/enhanced-task-store";
+import { formatDistanceToNow } from "@/utils/date-utils";
 
 interface PlantTaskCardProps {
   plant: Plant;
   tasks: Task[];
-  onCompleteTask: (taskId: string) => Promise<TaskUpdateResult>;
 }
 
 const MAX_TASKS_DISPLAY = 2;
@@ -17,8 +16,8 @@ const MAX_TASKS_DISPLAY = 2;
 export const PlantTaskCard: React.FC<PlantTaskCardProps> = ({
   plant,
   tasks,
-  onCompleteTask,
 }) => {
+  const { completeTask, getTaskStatus } = useEnhancedTaskStore();
   const [completingTasks, setCompletingTasks] = useState<Set<string>>(
     new Set()
   );
@@ -26,12 +25,14 @@ export const PlantTaskCard: React.FC<PlantTaskCardProps> = ({
     Map<string, { message: string; isError: boolean }>
   >(new Map());
 
+  // Sort tasks by due date (earliest first)
   const sortedTasks = [...tasks].sort(
     (a, b) => a.dueDate.toMillis() - b.dueDate.toMillis()
   );
+
   const tasksToDisplay = sortedTasks.slice(0, MAX_TASKS_DISPLAY);
   const remainingTasksCount = sortedTasks.length - tasksToDisplay.length;
-  const now = new Date();
+
   const locationString =
     plant.location?.room || plant.location?.city || "Unknown Location";
   const imageUrl = plant.imageUrl || "/images/plants/normal-plants/plant-2.jpg";
@@ -46,7 +47,7 @@ export const PlantTaskCard: React.FC<PlantTaskCardProps> = ({
 
     try {
       // Call the async function that completes the task and updates plant data
-      const result = await onCompleteTask(taskId);
+      const result = await completeTask(taskId);
 
       // Show a message based on the result
       setCompletionMessages((prev) => {
@@ -69,10 +70,7 @@ export const PlantTaskCard: React.FC<PlantTaskCardProps> = ({
         }, 3000);
       }
     } catch (error) {
-      console.error(
-        "Something went wring during handleCheckboxChange: ",
-        error
-      );
+      console.error("Error during task completion:", error);
     } finally {
       // Remove loading state
       setCompletingTasks((prev) => {
@@ -90,8 +88,8 @@ export const PlantTaskCard: React.FC<PlantTaskCardProps> = ({
           <Image
             src={imageUrl}
             alt={plant.name}
-            layout="fill"
-            objectFit="cover"
+            fill
+            style={{ objectFit: "cover" }}
           />
         </SC.PlantImageContainer>
         <SC.PlantDetails>
@@ -112,15 +110,38 @@ export const PlantTaskCard: React.FC<PlantTaskCardProps> = ({
       {/* Task Section */}
       <SC.TaskSection>
         {tasksToDisplay.map((task) => {
-          const dueDate = task.dueDate.toDate();
-          const isOverdue =
-            task.status === TaskStatus.PENDING && dueDate <= now;
           const isCompleting = completingTasks.has(task.id);
           const completionInfo = completionMessages.get(task.id);
+          const { status, color, isCompletable } = getTaskStatus(task);
 
+          // For completed tasks, only show the status badge
+          if (task.status === TaskStatus.COMPLETED) {
+            return (
+              <SC.TaskItem key={task.id}>
+                {/* Task info */}
+                <SC.TaskTextContainer>
+                  <SC.TaskName>{task.taskType}</SC.TaskName>
+                  <SC.TaskDueDate isOverdue={false}>
+                    {formatDistanceToNow(
+                      task.completedAt?.toDate() || new Date()
+                    )}
+                  </SC.TaskDueDate>
+                </SC.TaskTextContainer>
+
+                <SC.WateringStatus
+                  color={color}
+                  data-testid={`task-status-${task.id}`}
+                >
+                  {status}
+                </SC.WateringStatus>
+              </SC.TaskItem>
+            );
+          }
+
+          // For pending tasks, show either a checkbox or status badge
           return (
             <SC.TaskItem key={task.id}>
-              {/* Group Name and Date */}
+              {/* Task info */}
               <SC.TaskTextContainer>
                 <SC.TaskName>{task.taskType}</SC.TaskName>
                 {completionInfo ? (
@@ -128,27 +149,36 @@ export const PlantTaskCard: React.FC<PlantTaskCardProps> = ({
                     {completionInfo.message}
                   </SC.TaskCompletionMessage>
                 ) : (
-                  <SC.TaskDueDate isOverdue={isOverdue}>
+                  <SC.TaskDueDate
+                    isOverdue={color === "#D32F2F"} // Red color for overdue
+                  >
                     {isCompleting
                       ? "Updating..."
-                      : formatDistanceToNow(dueDate)}
+                      : formatDistanceToNow(task.dueDate.toDate())}
                   </SC.TaskDueDate>
                 )}
               </SC.TaskTextContainer>
 
-              {/* Checkbox */}
-              <SC.TaskCheckbox
-                checked={task.status === TaskStatus.COMPLETED}
-                onChange={() => {
-                  if (!isCompleting && task.status !== TaskStatus.COMPLETED) {
-                    handleCheckboxChange(task.id);
-                  }
-                }}
-                disabled={isCompleting || task.status === TaskStatus.COMPLETED}
-              />
+              {/* Show checkbox for completable tasks or status for non-completable */}
+              {isCompletable ? (
+                <SC.TaskCheckbox
+                  checked={false}
+                  onChange={() => handleCheckboxChange(task.id)}
+                  disabled={isCompleting}
+                  data-testid={`task-checkbox-${task.id}`}
+                />
+              ) : (
+                <SC.WateringStatus
+                  color={color}
+                  data-testid={`task-status-${task.id}`}
+                >
+                  {status}
+                </SC.WateringStatus>
+              )}
             </SC.TaskItem>
           );
         })}
+
         {remainingTasksCount > 0 && (
           <SC.MoreTasksBadge>
             +{remainingTasksCount} more task{remainingTasksCount > 1 ? "s" : ""}

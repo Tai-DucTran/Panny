@@ -1,15 +1,16 @@
 "use client";
 import { usePlantStore } from "@/store/plant-store";
-import { useTasks } from "@/hooks/fetching-data/use-tasks";
-import { Task, TaskStatus } from "@/models/tasks";
+import { useEnhancedTaskStore } from "@/store/enhanced-task-store";
+import { Task } from "@/models/tasks";
 import { useEffect, useMemo, useState } from "react";
 import { TaskListContainer } from "@/components/task-list/index.sc";
 import { Timestamp } from "firebase/firestore";
-import { PlantTaskCard } from "@/components/task-list";
 import { AppBar } from "@/components/app-bar/indext";
 import Spacer from "@/components/utils/spacer/spacer";
 import EmptyTasks from "@/components/task-list/empty-task";
 import SubscriptionContainer from "@/components/task-list/subscription-container";
+import { LoadingSpinner } from "@/components/spinner";
+import { PlantTaskCard } from "@/components/task-list";
 
 // Helper function to find the earliest due date for a plant's tasks
 const getEarliestDueDate = (tasks: Task[]): Timestamp | null => {
@@ -25,69 +26,89 @@ const getEarliestDueDate = (tasks: Task[]): Timestamp | null => {
 };
 
 const TasksPage = () => {
-  const { plants, fetchPlants } = usePlantStore();
-  const { tasks, completeTask } = useTasks();
-  const [isTimeoutOccurred] = useState(false);
+  const { plants, fetchPlants, isLoading: plantsLoading } = usePlantStore();
+  const {
+    tasks,
+    isLoading: tasksLoading,
+    generateTasks,
+  } = useEnhancedTaskStore();
+  const [initialized, setInitialized] = useState(false);
 
+  // Load plants and generate tasks
   useEffect(() => {
-    const loadPlants = async () => {
-      try {
+    const initializeData = async () => {
+      if (plants.length === 0 && !plantsLoading) {
         await fetchPlants();
-      } catch (error) {
-        console.error("Error fetching plants:", error);
+      } else if (!plantsLoading && plants.length > 0 && !initialized) {
+        generateTasks();
+        setInitialized(true);
       }
     };
 
-    if (plants.length === 0) {
-      loadPlants();
-    }
-  }, [fetchPlants, plants.length]);
+    initializeData();
+  }, [fetchPlants, generateTasks, initialized, plants, plantsLoading]);
 
+  // Group pending tasks by plant
   const pendingTasksByPlant = useMemo(() => {
-    const pendingTasks = tasks.filter(
-      (task) => task.status === TaskStatus.PENDING
-    );
     const grouped: Record<string, Task[]> = {};
-    for (const task of pendingTasks) {
-      if (!grouped[task.plantId]) {
-        grouped[task.plantId] = [];
+
+    for (const task of tasks) {
+      if (task.status === "Pending") {
+        if (!grouped[task.plantId]) {
+          grouped[task.plantId] = [];
+        }
+        grouped[task.plantId].push(task);
       }
-      grouped[task.plantId].push(task);
     }
+
     return grouped;
   }, [tasks]);
 
-  const plantsWithPendingTasks = useMemo(() => {
-    // Filter plants first
-    const filteredPlants = plants.filter(
+  // Filter and sort plants with pending tasks
+  const plantsWithTasks = useMemo(() => {
+    // Get plants that have pending tasks
+    const filtered = plants.filter(
       (plant) => pendingTasksByPlant[plant.id]?.length > 0
     );
 
-    // Only sort if we have plants
-    if (filteredPlants.length === 0) return [];
+    // Sort plants by earliest due date
+    if (filtered.length > 0) {
+      filtered.sort((plantA, plantB) => {
+        const tasksA = pendingTasksByPlant[plantA.id] || [];
+        const tasksB = pendingTasksByPlant[plantB.id] || [];
 
-    // Then sort the filtered plants
-    filteredPlants.sort((plantA, plantB) => {
-      const tasksA = pendingTasksByPlant[plantA.id] || [];
-      const tasksB = pendingTasksByPlant[plantB.id] || [];
+        const earliestA = getEarliestDueDate(tasksA);
+        const earliestB = getEarliestDueDate(tasksB);
 
-      const earliestDueDateA = getEarliestDueDate(tasksA);
-      const earliestDueDateB = getEarliestDueDate(tasksB);
+        if (!earliestA && !earliestB) return 0;
+        if (!earliestA) return 1;
+        if (!earliestB) return -1;
 
-      // Handle cases where due dates might be null
-      if (!earliestDueDateA && !earliestDueDateB) return 0;
-      if (!earliestDueDateA) return 1;
-      if (!earliestDueDateB) return -1;
+        return earliestA.toMillis() - earliestB.toMillis();
+      });
+    }
 
-      // Compare milliseconds
-      return earliestDueDateA.toMillis() - earliestDueDateB.toMillis();
-    });
-
-    return filteredPlants;
+    return filtered;
   }, [plants, pendingTasksByPlant]);
 
-  // Handle the case when the timeout occurred but we still have no data
-  const forceShowEmptyState = isTimeoutOccurred && plants.length === 0;
+  const isLoading = plantsLoading || tasksLoading;
+
+  if (isLoading) {
+    return (
+      <>
+        <AppBar title="Take Care List" />
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            paddingTop: "4rem",
+          }}
+        >
+          <LoadingSpinner size="large" />
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -96,15 +117,14 @@ const TasksPage = () => {
       <TaskListContainer>
         <SubscriptionContainer />
 
-        {forceShowEmptyState || plantsWithPendingTasks.length === 0 ? (
+        {plantsWithTasks.length === 0 ? (
           <EmptyTasks hasPlants={plants.length > 0} />
         ) : (
-          plantsWithPendingTasks.map((plant) => (
+          plantsWithTasks.map((plant) => (
             <PlantTaskCard
               key={plant.id}
               plant={plant}
               tasks={pendingTasksByPlant[plant.id] || []}
-              onCompleteTask={completeTask}
             />
           ))
         )}

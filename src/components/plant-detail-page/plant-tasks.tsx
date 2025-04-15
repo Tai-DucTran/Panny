@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Task, TaskStatus } from "@/models/tasks";
 import { formatTimestamp } from "@/utils/timestamp-utils";
-import { TaskUpdateResult } from "@/hooks/fetching-data/use-tasks";
 import { LoadingSpinner } from "@/components/spinner";
+import { useEnhancedTaskStore } from "@/store/enhanced-task-store";
 import {
   DetailsList,
   TaskItem,
@@ -15,15 +15,11 @@ import {
 
 interface PlantTasksProps {
   tasks: Task[];
-  onCompleteTask: (taskId: string) => Promise<TaskUpdateResult>;
   isLoading: boolean;
 }
 
-const PlantTasks: React.FC<PlantTasksProps> = ({
-  tasks,
-  onCompleteTask,
-  isLoading,
-}) => {
+const PlantTasks: React.FC<PlantTasksProps> = ({ tasks, isLoading }) => {
+  const { completeTask, getTaskStatus } = useEnhancedTaskStore();
   const [completingTasks, setCompletingTasks] = useState<Set<string>>(
     new Set()
   );
@@ -42,7 +38,7 @@ const PlantTasks: React.FC<PlantTasksProps> = ({
     });
 
     try {
-      const result = await onCompleteTask(taskId);
+      const result = await completeTask(taskId);
 
       // Set status message
       setStatusMessages((prev) => ({
@@ -64,7 +60,7 @@ const PlantTasks: React.FC<PlantTasksProps> = ({
         }, 3000);
       }
     } catch (error) {
-      console.error("Error while trying to handle complete task", error);
+      console.error("Error while completing task:", error);
     } finally {
       // Remove loading state
       setCompletingTasks((prev) => {
@@ -102,6 +98,7 @@ const PlantTasks: React.FC<PlantTasksProps> = ({
       {tasks.map((task) => {
         const isCompleting = completingTasks.has(task.id);
         const statusMessage = statusMessages[task.id];
+        const { status, color, isCompletable } = getTaskStatus(task);
 
         return (
           <TaskItem key={task.id}>
@@ -110,19 +107,27 @@ const PlantTasks: React.FC<PlantTasksProps> = ({
               <TaskDate>
                 {statusMessage
                   ? statusMessage.message
-                  : task.dueDate && `Due: ${formatTimestamp(task.dueDate)}`}
+                  : task.status === TaskStatus.COMPLETED
+                  ? `Completed: ${formatTimestamp(task.completedAt)}`
+                  : `Due: ${formatTimestamp(task.dueDate)}`}
               </TaskDate>
             </TaskInfo>
 
             <div style={{ display: "flex", alignItems: "center" }}>
-              <TaskStatusBadge status={task.status}>
-                {task.status}
+              {/* Show status badge for all tasks */}
+              <TaskStatusBadge
+                status={task.status}
+                style={{ backgroundColor: color }}
+              >
+                {status}
               </TaskStatusBadge>
 
-              {task.status === TaskStatus.PENDING && (
+              {/* Show Complete button only for pending and completable tasks */}
+              {task.status === TaskStatus.PENDING && isCompletable && (
                 <ActionButton
                   onClick={() => handleCompleteTask(task.id)}
                   disabled={isCompleting}
+                  data-testid={`complete-button-${task.id}`}
                 >
                   {isCompleting ? "..." : "Complete"}
                 </ActionButton>

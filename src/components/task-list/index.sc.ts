@@ -1,7 +1,7 @@
 // src/components/task-list/index.sc.ts
 import styled from "styled-components";
 import { theme } from "@/styles/theme";
-import { HealthStatus } from "@/models/plant"; // Import HealthStatus enum
+import { HealthStatus } from "@/models/plant";
 
 export const CardWrapper = styled.div`
   background-color: white;
@@ -25,11 +25,10 @@ export const PlantImageContainer = styled.div`
   overflow: hidden;
   position: relative;
   flex-shrink: 0;
-  background-color: ${theme.colors.palette
-    .alabaster}; /* Placeholder background */
+  background-color: ${theme.colors.palette.alabaster};
 
   img {
-    display: block; /* Remove extra space below image */
+    display: block;
   }
 `;
 
@@ -52,7 +51,7 @@ export const LocationText = styled.span`
   color: #666;
 `;
 
-// Reusable Health Status Badge (similar to plant-detail-page)
+// Reusable Health Status Badge
 export const HealthStatusBadge = styled.span.withConfig({
   shouldForwardProp: (prop) => prop !== "status",
 })<{ status: HealthStatus }>`
@@ -60,7 +59,7 @@ export const HealthStatusBadge = styled.span.withConfig({
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 500;
-  align-self: flex-start; /* Align badge to the start */
+  align-self: flex-start;
   background-color: ${({ status }) => {
     switch (status) {
       case HealthStatus.EXCELLENT:
@@ -78,29 +77,31 @@ export const HealthStatusBadge = styled.span.withConfig({
     }
   }};
   color: white;
-  text-transform: capitalize; /* Make status look nicer */
+  text-transform: capitalize;
 `;
 
 export const Divider = styled.hr`
   border: none;
   border-top: 1px solid #eee;
-  margin: 0 1rem; /* Add horizontal margin */
+  margin: 0 1rem;
 `;
 
 export const TaskSection = styled.div`
   padding: 1rem;
   display: flex;
-  flex-direction: row; /* Arrange tasks horizontally */
-  flex-wrap: wrap; /* Allow tasks to wrap to the next line if needed */
-  gap: 1.5rem; /* Add space between horizontal task items */
-  align-items: center; /* Align items vertically if they wrap */
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: center;
 `;
 
-// It now just groups text and checkbox together closely
+// Group text and checkbox
 export const TaskItem = styled.div`
   display: flex;
-  align-items: center; /* Vertically center text block and checkbox */
-  gap: 8px; /* Gap between text container and checkbox */
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+  min-width: 200px;
 `;
 
 export const TaskTextContainer = styled.div`
@@ -124,7 +125,7 @@ export const TaskDueDate = styled.span.withConfig({
   margin-top: 2px;
 `;
 
-// New component for task completion messages
+// Task completion messages
 export const TaskCompletionMessage = styled.span.withConfig({
   shouldForwardProp: (prop) => prop !== "isError",
 })<{ isError: boolean }>`
@@ -160,9 +161,22 @@ export const TaskCheckbox = styled.input.attrs({ type: "checkbox" })`
   }
 `;
 
-// MoreTasksBadge remains the same - will appear below the wrapped tasks if count > MAX_TASKS_DISPLAY
+// Generic status badge for tasks
+export const WateringStatus = styled.div.withConfig({
+  shouldForwardProp: (prop) => prop !== "color",
+})<{ color: string }>`
+  background-color: ${({ color }) => color};
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-align: center;
+  min-width: 80px;
+`;
+
+// More tasks badge
 export const MoreTasksBadge = styled.div`
-  /* Add width: 100% to make it take full width if tasks wrap */
   width: 100%;
   background-color: ${theme.colors.palette.morningBlue};
   color: ${theme.colors.palette.darkCharcoal};
@@ -171,7 +185,7 @@ export const MoreTasksBadge = styled.div`
   font-size: 0.8rem;
   font-weight: 500;
   text-align: center;
-  margin-top: 1rem; /* Adjust spacing if needed */
+  margin-top: 1rem;
 `;
 
 export const TaskListContainer = styled.div`
@@ -210,5 +224,43 @@ export const UpdateMessage = styled.div`
       transform: translateY(0);
       opacity: 1;
     }
+  }
+`;
+
+// New task status badge
+export const TaskStatusBadge = styled.span.withConfig({
+  shouldForwardProp: (prop) => prop !== "color",
+})<{ color?: string }>`
+  background-color: ${({ color }) => color || "#4CAF50"};
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-align: center;
+  min-width: 80px;
+  display: inline-block;
+`;
+
+// Task action button
+export const TaskActionButton = styled.button`
+  padding: 4px 8px;
+  background-color: ${theme.colors.palette.russianGreen};
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-left: 8px;
+
+  &:hover {
+    background-color: ${theme.colors.palette.axolotl};
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 `;

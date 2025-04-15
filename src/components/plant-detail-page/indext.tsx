@@ -25,7 +25,7 @@ import Spacer from "../utils/spacer/spacer";
 import { toTitleCase } from "@/utils/string-utils";
 import { MarkdownContent } from "../add-plant-form/plant-info-view.sc";
 import PlantTasks from "./plant-tasks";
-import { useTasks } from "@/hooks/fetching-data/use-tasks";
+import { useEnhancedTaskStore } from "@/store/enhanced-task-store";
 
 interface PlantDetailsProps {
   plantId: string;
@@ -35,12 +35,17 @@ const defaultImageUrl = "/images/plants/normal-plants/plant-1.jpg";
 
 const PlantDetails: React.FC<PlantDetailsProps> = ({ plantId }) => {
   const { plants, fetchPlants, isLoading } = usePlantStore();
+  const {
+    getPlantTasks,
+    isLoading: tasksLoading,
+    generateTasks,
+  } = useEnhancedTaskStore();
   const [plant, setPlant] = useState<Plant | null>(null);
-  const { tasks, isLoading: tasksLoading, completeTask } = useTasks();
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     const findPlantInStore = () => {
-      // First check if the plant is already in the Zustand store
+      // Check if the plant is already in the Zustand store
       const foundPlant = plants.find((p) => p.id === plantId);
       if (foundPlant) {
         setPlant(foundPlant);
@@ -51,18 +56,27 @@ const PlantDetails: React.FC<PlantDetailsProps> = ({ plantId }) => {
 
     const loadPlant = async () => {
       // Try to find the plant in the store first
-      if (findPlantInStore()) return;
+      if (findPlantInStore()) {
+        if (!initialized) {
+          generateTasks();
+          setInitialized(true);
+        }
+        return;
+      }
 
       // If plants array is empty, fetch plants
       if (plants.length === 0) {
         await fetchPlants();
         // After fetching, check again if we can find the plant
-        findPlantInStore();
+        if (findPlantInStore() && !initialized) {
+          generateTasks();
+          setInitialized(true);
+        }
       }
     };
 
     loadPlant();
-  }, [plantId, plants, fetchPlants]);
+  }, [plantId, plants, fetchPlants, generateTasks, initialized]);
 
   if (isLoading) {
     return <LoadingSpinner size="large" />;
@@ -86,7 +100,7 @@ const PlantDetails: React.FC<PlantDetailsProps> = ({ plantId }) => {
     return plant.location?.type || "Unknown";
   };
 
-  const plantTasks = tasks.filter((task) => task.plantId === plantId);
+  const plantTasks = getPlantTasks(plantId);
 
   return (
     <div>
@@ -142,11 +156,7 @@ const PlantDetails: React.FC<PlantDetailsProps> = ({ plantId }) => {
 
       <DetailsSection>
         <SectionTitle>Current Tasks</SectionTitle>
-        <PlantTasks
-          tasks={plantTasks}
-          onCompleteTask={completeTask}
-          isLoading={tasksLoading}
-        />
+        <PlantTasks tasks={plantTasks} isLoading={tasksLoading} />
       </DetailsSection>
 
       <DetailsSection>
