@@ -32,21 +32,66 @@ const TasksPage = () => {
     isLoading: tasksLoading,
     generateTasks,
   } = useEnhancedTaskStore();
-  const [initialized, setInitialized] = useState(false);
+
+  // Single isLoading state to control the spinner
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Use a ref to track if we've attempted to load data
+  const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
 
   // Load plants and generate tasks
   useEffect(() => {
+    let mounted = true;
+
     const initializeData = async () => {
-      if (plants.length === 0 && !plantsLoading) {
-        await fetchPlants();
-      } else if (!plantsLoading && plants.length > 0 && !initialized) {
+      if (!mounted || hasAttemptedLoad) return;
+
+      setHasAttemptedLoad(true);
+
+      try {
+        // If plants aren't loaded yet, fetch them first
+        if (plants.length === 0) {
+          await fetchPlants();
+        }
+
+        // Generate tasks once plants are available
         generateTasks();
-        setInitialized(true);
+
+        // Set loading state to false once everything is initialized
+        if (mounted) {
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Error initializing data:", error);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     initializeData();
-  }, [fetchPlants, generateTasks, initialized, plants, plantsLoading]);
+
+    // Add a safety timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      if (mounted && isLoading) {
+        console.log("Loading timeout reached");
+        setIsLoading(false);
+      }
+    }, 5000); // 5 seconds timeout
+
+    return () => {
+      mounted = false;
+      clearTimeout(timeoutId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchPlants, generateTasks, plants, hasAttemptedLoad]);
+
+  // Effect to update loading state when store's loading state changes
+  useEffect(() => {
+    if (!plantsLoading && !tasksLoading && hasAttemptedLoad) {
+      setIsLoading(false);
+    }
+  }, [plantsLoading, tasksLoading, hasAttemptedLoad]);
 
   // Group pending tasks by plant
   const pendingTasksByPlant = useMemo(() => {
@@ -90,8 +135,6 @@ const TasksPage = () => {
 
     return filtered;
   }, [plants, pendingTasksByPlant]);
-
-  const isLoading = plantsLoading || tasksLoading;
 
   if (isLoading) {
     return (

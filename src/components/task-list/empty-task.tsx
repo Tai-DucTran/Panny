@@ -5,12 +5,25 @@ import {
   EmptyText,
   EmptyTitle,
 } from "./empty-task.sc";
+import { LoadingSpinner } from "@/components/spinner";
 
 interface EmptyTasksProps {
   hasPlants: boolean;
+  isLoading?: boolean;
 }
 
-const EmptyTasks: React.FC<EmptyTasksProps> = ({ hasPlants }) => {
+const EmptyTasks: React.FC<EmptyTasksProps> = ({
+  hasPlants,
+  isLoading = false,
+}) => {
+  if (isLoading) {
+    return (
+      <EmptyContainer>
+        <LoadingSpinner size="large" />
+      </EmptyContainer>
+    );
+  }
+
   return (
     <EmptyContainer>
       <Image
