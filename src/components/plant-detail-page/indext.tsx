@@ -24,6 +24,8 @@ import { AppBar } from "../app-bar/indext";
 import Spacer from "../utils/spacer/spacer";
 import { toTitleCase } from "@/utils/string-utils";
 import { MarkdownContent } from "../add-plant-form/plant-info-view.sc";
+import PlantTasks from "./plant-tasks";
+import { useTasks } from "@/hooks/fetching-data/use-tasks";
 
 interface PlantDetailsProps {
   plantId: string;
@@ -34,6 +36,7 @@ const defaultImageUrl = "/images/plants/normal-plants/plant-1.jpg";
 const PlantDetails: React.FC<PlantDetailsProps> = ({ plantId }) => {
   const { plants, fetchPlants, isLoading } = usePlantStore();
   const [plant, setPlant] = useState<Plant | null>(null);
+  const { tasks, isLoading: tasksLoading, completeTask } = useTasks();
 
   useEffect(() => {
     const findPlantInStore = () => {
@@ -82,6 +85,8 @@ const PlantDetails: React.FC<PlantDetailsProps> = ({ plantId }) => {
     }
     return plant.location?.type || "Unknown";
   };
+
+  const plantTasks = tasks.filter((task) => task.plantId === plantId);
 
   return (
     <div>
@@ -134,6 +139,15 @@ const PlantDetails: React.FC<PlantDetailsProps> = ({ plantId }) => {
       </TopFold>
 
       <Spacer size={24} />
+
+      <DetailsSection>
+        <SectionTitle>Current Tasks</SectionTitle>
+        <PlantTasks
+          tasks={plantTasks}
+          onCompleteTask={completeTask}
+          isLoading={tasksLoading}
+        />
+      </DetailsSection>
 
       <DetailsSection>
         <SectionTitle>Sunlight Needs</SectionTitle>

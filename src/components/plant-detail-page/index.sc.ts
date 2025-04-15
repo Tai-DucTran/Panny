@@ -1,6 +1,7 @@
 import { HealthStatus } from "@/models/plant";
 import { theme } from "@/styles/theme";
 import styled from "styled-components";
+import { TaskStatus } from "@/models/tasks";
 
 export const TopFold = styled.div`
   display: flex;
@@ -71,7 +72,11 @@ export const HealthStatusBadge = styled.span.withConfig({
   color: white;
 `;
 
-export const DetailsSection = styled.section``;
+export const DetailsSection = styled.section`
+  border-bottom: 1px solid #eaeaea;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+`;
 
 export const SectionTitle = styled.h2`
   font-size: 1.1rem;
@@ -101,4 +106,66 @@ export const DetailItemLabel = styled.span`
 export const DetailItemValue = styled.span`
   font-size: 0.9rem;
   color: #333;
+`;
+
+export const TaskItem = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  border-left: 3px solid ${theme.colors.palette.russianGreen};
+`;
+
+export const TaskInfo = styled.div`
+  flex: 1;
+`;
+
+export const TaskName = styled.div`
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: ${theme.colors.palette.darkCharcoal};
+`;
+
+export const TaskDate = styled.div`
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 0.25rem;
+`;
+
+export const TaskStatusBadge = styled.span.withConfig({
+  shouldForwardProp: (prop) => prop !== "status",
+})<{ status: TaskStatus }>`
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background-color: ${({ status }) =>
+    status === TaskStatus.COMPLETED ? "#4CAF50" : "#FFC107"};
+  color: ${({ status }) =>
+    status === TaskStatus.COMPLETED ? "white" : "#333"};
+`;
+
+export const ActionButton = styled.button`
+  padding: 0.4rem 0.75rem;
+  background-color: ${theme.colors.palette.russianGreen};
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-left: 0.5rem;
+
+  &:hover {
+    background-color: ${theme.colors.palette.axolotl};
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 `;
