@@ -22,8 +22,6 @@ const StepTwo: React.FC<StepTwoProps> = ({ formData, updateFormData }) => {
       type: PlantLocationType;
       room: string;
       lightExposure: LightExposure;
-      city: string;
-      country: string;
     }>
   ) => {
     const currentLocation = formData.location || {
@@ -85,28 +83,6 @@ const StepTwo: React.FC<StepTwoProps> = ({ formData, updateFormData }) => {
           <option value={LightExposure.BRIGHT}>Bright Light</option>
           <option value={LightExposure.DIRECT_SUN}>Direct Sunlight</option>
         </StyledSelect>
-      </FormGroup>
-
-      <FormGroup>
-        <StyledLabel htmlFor="city">Your City</StyledLabel>
-        <StyledInput
-          id="city"
-          type="text"
-          value={formData.location?.city || ""}
-          onChange={(e) => updateLocation({ city: e.target.value })}
-          placeholder="e.g., New York"
-        />
-      </FormGroup>
-
-      <FormGroup>
-        <StyledLabel htmlFor="country">Your Country</StyledLabel>
-        <StyledInput
-          id="country"
-          type="text"
-          value={formData.location?.country || ""}
-          onChange={(e) => updateLocation({ country: e.target.value })}
-          placeholder="e.g., United States"
-        />
       </FormGroup>
     </StepContainer>
   );
