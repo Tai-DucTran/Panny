@@ -1,6 +1,6 @@
 // src/store/enhanced-task-store.ts
 import { create } from "zustand";
-import { Plant, HealthStatus } from "@/models/plant";
+import { Plant, HealthStatus, AcquiredTimeOption } from "@/models/plant";
 import { Timestamp, doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/services/firebase/firebase-config";
 import {
@@ -91,6 +91,7 @@ export const useEnhancedTaskStore = create<TaskState>((set, get) => ({
     const processedTaskIds = new Set<string>();
     const finalTasks: Task[] = [];
 
+    // First, add all generated tasks, applying completion status if needed
     generatedTasks.forEach((task) => {
       // Skip if we've already processed this task ID
       if (processedTaskIds.has(task.id)) {
@@ -114,19 +115,112 @@ export const useEnhancedTaskStore = create<TaskState>((set, get) => ({
       }
     });
 
-    // Add completed tasks that might not be in the generated set
-    // This ensures we don't lose completed tasks when regenerating
+    // Now process each plant for completed repotting tasks that might not match by ID
+    plants.forEach((plant) => {
+      if (plant.lastRepotted) {
+        // Check if any task in finalTasks is a repotting task for this plant
+        const hasRepottingTask = finalTasks.some(
+          (task) =>
+            task.plantId === plant.id && task.taskType === TaskType.REPOTTING
+        );
+
+        // Check if there's already a completed repotting task
+        const hasCompletedRepottingTask = finalTasks.some(
+          (task) =>
+            task.plantId === plant.id &&
+            task.taskType === TaskType.REPOTTING &&
+            task.status === TaskStatus.COMPLETED
+        );
+
+        // If we have an active task but no completed one, check if it should be completed
+        if (hasRepottingTask && !hasCompletedRepottingTask) {
+          // Get the active repotting task
+          const activeTask = finalTasks.find(
+            (task) =>
+              task.plantId === plant.id &&
+              task.taskType === TaskType.REPOTTING &&
+              task.status === TaskStatus.PENDING
+          );
+
+          if (activeTask) {
+            // Check if the lastRepotted date is after the task's dueDate
+            const lastRepottedTime = plant.lastRepotted.toDate().getTime();
+            const taskDueTime = activeTask.dueDate.toDate().getTime();
+
+            if (lastRepottedTime > taskDueTime) {
+              // Update the task to completed status
+              activeTask.status = TaskStatus.COMPLETED;
+              activeTask.completed = true;
+              activeTask.completedAt = plant.lastRepotted;
+            }
+          }
+        }
+      }
+    });
+
+    // Add older completed tasks that might not be in the generated set
+    // This ensures we don't lose history when regenerating
     tasks.forEach((task) => {
       if (
         task.status === TaskStatus.COMPLETED &&
         !processedTaskIds.has(task.id)
       ) {
-        processedTaskIds.add(task.id);
-        finalTasks.push(task);
+        // Only add if we don't already have a more recent completed task of this type for this plant
+        const existingCompleted = finalTasks.find(
+          (t) =>
+            t.plantId === task.plantId &&
+            t.taskType === task.taskType &&
+            t.status === TaskStatus.COMPLETED &&
+            t.completedAt &&
+            task.completedAt &&
+            t.completedAt.toMillis() > task.completedAt.toMillis()
+        );
+
+        if (!existingCompleted) {
+          processedTaskIds.add(task.id);
+          finalTasks.push(task);
+        }
       }
     });
 
-    set({ tasks: finalTasks, isLoading: false });
+    // For each plant, ensure we don't have duplicate pending tasks of the same type
+    // (we want to keep only the most recent pending task per plant and type)
+    const plantTaskMap = new Map<string, Map<TaskType, Task>>();
+
+    // First, collect all pending tasks by plant and type
+    finalTasks.forEach((task) => {
+      if (task.status === TaskStatus.PENDING) {
+        if (!plantTaskMap.has(task.plantId)) {
+          plantTaskMap.set(task.plantId, new Map<TaskType, Task>());
+        }
+
+        const plantTasks = plantTaskMap.get(task.plantId)!;
+        if (
+          !plantTasks.has(task.taskType) ||
+          plantTasks.get(task.taskType)!.dueDate.toMillis() <
+            task.dueDate.toMillis()
+        ) {
+          plantTasks.set(task.taskType, task);
+        }
+      }
+    });
+
+    // Create a filtered list with only the latest pending task per plant and type
+    const filteredTasks = finalTasks.filter((task) => {
+      if (task.status === TaskStatus.COMPLETED) {
+        return true; // Keep all completed tasks
+      }
+
+      // For pending tasks, check if it's the latest one
+      const plantTasks = plantTaskMap.get(task.plantId);
+      if (plantTasks && plantTasks.get(task.taskType) === task) {
+        return true;
+      }
+
+      return false;
+    });
+
+    set({ tasks: filteredTasks, isLoading: false });
   },
 
   isTaskCompletable: (task: Task): boolean => {
@@ -284,15 +378,9 @@ export const useEnhancedTaskStore = create<TaskState>((set, get) => ({
         updatedAt: now,
       };
 
-      // Create a new task ID that will be used after updating the plant
-      // This ensures task IDs are tied to the updated timestamps
-      let newTaskId = "";
-
       // Update specific fields based on task type
       if (taskToComplete.taskType === TaskType.WATERING) {
         plantUpdateData.lastWatered = now;
-        // Generate a new task ID based on the new lastWatered timestamp
-        newTaskId = `watering-${plant.id}-${now.seconds}`;
 
         // Optionally improve health status if it was poor due to underwatering
         if (
@@ -303,8 +391,11 @@ export const useEnhancedTaskStore = create<TaskState>((set, get) => ({
         }
       } else if (taskToComplete.taskType === TaskType.REPOTTING) {
         plantUpdateData.lastRepotted = now;
-        // Generate a new task ID based on the new lastRepotted timestamp
-        newTaskId = `repotting-${plant.id}-${now.seconds}`;
+
+        // If the plant was just bought, update its acquisition status
+        if (plant.acquiredTimeOption === AcquiredTimeOption.JUST_BOUGHT) {
+          plantUpdateData.acquiredTimeOption = AcquiredTimeOption.LAST_WEEK;
+        }
       }
 
       // Update plant in Firestore
@@ -317,33 +408,29 @@ export const useEnhancedTaskStore = create<TaskState>((set, get) => ({
       // Update local plant state
       await updatePlant(plant.id, plantUpdateData);
 
-      // First mark the current task as completed in local state
-      set((state) => ({
-        tasks: state.tasks.map((task) =>
-          task.id === taskId
-            ? {
-                ...task,
-                status: TaskStatus.COMPLETED,
-                completed: true,
-                completedAt: now,
-              }
-            : task
-        ),
-      }));
+      // Mark the current task as completed in local state
+      const updatedTasks = tasks.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              status: TaskStatus.COMPLETED,
+              completed: true,
+              completedAt: now,
+            }
+          : task
+      );
 
-      // Then regenerate tasks to ensure they reflect the latest plant data
-      // This is crucial for correctly showing the next pending task with updated timestamps
-      setTimeout(() => {
-        get().generateTasks();
-      }, 300);
+      // Update the tasks state
+      set({ tasks: updatedTasks });
 
+      // Return success status
       return {
         success: true,
         message:
           taskToComplete.taskType === TaskType.WATERING
             ? "Plant watered successfully"
             : "Plant repotted successfully",
-        taskId: newTaskId, // Return the new task ID
+        taskId,
       };
     } catch (error) {
       console.error(`Error completing task ${taskId}:`, error);

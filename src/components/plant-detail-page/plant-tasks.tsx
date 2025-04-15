@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Task, TaskStatus } from "@/models/tasks";
 import { formatTimestamp } from "@/utils/timestamp-utils";
+import { Timestamp } from "firebase/firestore";
 import { LoadingSpinner } from "@/components/spinner";
 import { useEnhancedTaskStore } from "@/store/enhanced-task-store";
 import {
@@ -19,13 +20,19 @@ interface PlantTasksProps {
 }
 
 const PlantTasks: React.FC<PlantTasksProps> = ({ tasks, isLoading }) => {
-  const { completeTask, getTaskStatus } = useEnhancedTaskStore();
+  const { completeTask, getTaskStatus, generateTasks } = useEnhancedTaskStore();
   const [completingTasks, setCompletingTasks] = useState<Set<string>>(
     new Set()
   );
   const [statusMessages, setStatusMessages] = useState<
     Record<string, { message: string; isError: boolean }>
   >({});
+  const [localTasks, setLocalTasks] = useState<Task[]>(tasks);
+
+  // Update local tasks when props tasks change
+  useEffect(() => {
+    setLocalTasks(tasks);
+  }, [tasks]);
 
   const handleCompleteTask = async (taskId: string) => {
     if (completingTasks.has(taskId)) return;
@@ -49,8 +56,27 @@ const PlantTasks: React.FC<PlantTasksProps> = ({ tasks, isLoading }) => {
         },
       }));
 
-      // Remove message after delay if successful
       if (result.success) {
+        // Update local task state to immediately show as completed
+        setLocalTasks((prevTasks) =>
+          prevTasks.map((task) =>
+            task.id === taskId
+              ? {
+                  ...task,
+                  status: TaskStatus.COMPLETED,
+                  completed: true,
+                  completedAt: Timestamp.now(), // Use Timestamp instead of Date
+                }
+              : task
+          )
+        );
+
+        // Regenerate all tasks to ensure consistency
+        setTimeout(() => {
+          generateTasks();
+        }, 300);
+
+        // Remove message after delay if successful
         setTimeout(() => {
           setStatusMessages((prev) => {
             const newMessages = { ...prev };
@@ -81,7 +107,7 @@ const PlantTasks: React.FC<PlantTasksProps> = ({ tasks, isLoading }) => {
     );
   }
 
-  if (tasks.length === 0) {
+  if (localTasks.length === 0) {
     return (
       <DetailsList>
         <TaskItem>
@@ -93,9 +119,27 @@ const PlantTasks: React.FC<PlantTasksProps> = ({ tasks, isLoading }) => {
     );
   }
 
+  // Sort tasks by status (pending first) and then by due date
+  const sortedTasks = [...localTasks].sort((a, b) => {
+    // First sort by status (pending first)
+    if (a.status !== b.status) {
+      return a.status === TaskStatus.PENDING ? -1 : 1;
+    }
+
+    // Then sort by date (earliest first for pending, latest first for completed)
+    if (a.status === TaskStatus.PENDING) {
+      return a.dueDate.toMillis() - b.dueDate.toMillis();
+    } else {
+      // For completed tasks, sort by completion date (most recent first)
+      const aTime = a.completedAt?.toMillis() || 0;
+      const bTime = b.completedAt?.toMillis() || 0;
+      return bTime - aTime;
+    }
+  });
+
   return (
     <DetailsList>
-      {tasks.map((task) => {
+      {sortedTasks.map((task) => {
         const isCompleting = completingTasks.has(task.id);
         const statusMessage = statusMessages[task.id];
         const { status, color, isCompletable } = getTaskStatus(task);
