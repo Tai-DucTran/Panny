@@ -174,15 +174,17 @@ const ProfileComponent: React.FC = () => {
 
       <Spacer size={20} />
 
-      {isGuestUser ? (
-        <S.SaveDataButton onClick={handleSaveDataClick}>
-          Save Your Data
-        </S.SaveDataButton>
-      ) : (
+      <>
+        {isGuestUser && (
+          <S.SaveDataButton onClick={handleSaveDataClick}>
+            Save Your Data
+          </S.SaveDataButton>
+        )}
+        <Spacer size={8} />
         <S.LogoutButton onClick={handleLogoutClick} disabled={isLoggingOut}>
           {isLoggingOut ? "Logging out..." : "Log Out"}
         </S.LogoutButton>
-      )}
+      </>
 
       {showConfirmation && (
         <S.ConfirmationOverlay>
