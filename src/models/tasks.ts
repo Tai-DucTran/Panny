@@ -52,13 +52,12 @@ export function generateWateringTaskFromPlant(plant: Plant): Task | null {
   const taskId = generateTaskId(plant.id, TaskType.WATERING, plant.lastWatered);
 
   // Determine if the task should be considered completed
-  // A task is completed if its due date is in the past and the last watering date
-  // is more recent than the due date (meaning it was watered after the due date)
   const now = new Date();
-  const isDueInPast = dueDate <= now;
-  const wasWateredAfterDueDate = lastWateredDate > dueDate;
+  const isPastDue = dueDate <= now;
 
-  const isCompleted = isDueInPast && !wasWateredAfterDueDate;
+  // A watering task is only completed if the due date hasn't passed yet
+  // If it's past due, it should show as pending (needs watering)
+  const isCompleted = !isPastDue;
 
   return {
     id: taskId,

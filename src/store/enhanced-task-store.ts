@@ -36,6 +36,58 @@ interface TaskState {
   getCompletedTasks: () => Task[];
 }
 
+const isSameDay = (timestamp1?: Timestamp, timestamp2?: Timestamp): boolean => {
+  if (!timestamp1 || !timestamp2) return false;
+
+  const date1 = timestamp1.toDate();
+  const date2 = timestamp2.toDate();
+
+  return (
+    date1.getFullYear() === date2.getFullYear() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getDate() === date2.getDate()
+  );
+};
+
+const deduplicateCompletedTasks = (tasks: Task[]): Task[] => {
+  // Map to store unique completed tasks by plant, type, and date
+  const uniqueCompletedTasks = new Map<string, Task>();
+
+  // All pending tasks will be kept as is
+  const pendingTasks = tasks.filter(
+    (task) => task.status === TaskStatus.PENDING
+  );
+
+  // Process completed tasks to deduplicate them
+  tasks
+    .filter((task) => task.status === TaskStatus.COMPLETED)
+    .forEach((task) => {
+      if (task.completedAt) {
+        const completionDate = task.completedAt.toDate();
+        // Create a key that combines plant ID, task type, and date (year-month-day)
+        const dateKey = `${completionDate.getFullYear()}-${completionDate.getMonth()}-${completionDate.getDate()}`;
+        const uniqueKey = `${task.plantId}-${task.taskType}-${dateKey}`;
+
+        // Store the most recent completion time for that day
+        const existingTask = uniqueCompletedTasks.get(uniqueKey);
+        if (
+          !existingTask ||
+          (existingTask.completedAt &&
+            task.completedAt.toMillis() > existingTask.completedAt.toMillis())
+        ) {
+          uniqueCompletedTasks.set(uniqueKey, task);
+        }
+      } else {
+        // For completed tasks without a completion timestamp, use a fallback key
+        const uniqueKey = `${task.plantId}-${task.taskType}-unknown`;
+        uniqueCompletedTasks.set(uniqueKey, task);
+      }
+    });
+
+  // Combine pending tasks with deduplicated completed tasks
+  return [...pendingTasks, ...uniqueCompletedTasks.values()];
+};
+
 export const useEnhancedTaskStore = create<TaskState>((set, get) => ({
   tasks: [],
   isLoading: false,
@@ -59,7 +111,6 @@ export const useEnhancedTaskStore = create<TaskState>((set, get) => ({
       }
 
       // For each plant-type combination, keep the most recent task
-      // This ensures we don't have duplicate watering or repotting tasks
       if (
         !taskIdsByPlantAndType.has(key) ||
         taskIdsByPlantAndType.get(key)!.dueDate.toMillis() <
@@ -77,6 +128,25 @@ export const useEnhancedTaskStore = create<TaskState>((set, get) => ({
       // Generate watering task
       const wateringTask = generateWateringTaskFromPlant(plant);
       if (wateringTask) {
+        // Special handling for watering tasks:
+        // For watering tasks, we need to determine if they're truly completed
+        // or if enough time has passed since watering that they should be pending again
+        if (plant.lastWatered && plant.wateringFrequency) {
+          const lastWateredDate = plant.lastWatered.toDate();
+          const nextWateringDate = new Date(lastWateredDate);
+          nextWateringDate.setDate(
+            nextWateringDate.getDate() + plant.wateringFrequency
+          );
+
+          const now = new Date();
+          if (nextWateringDate <= now) {
+            // If it's time to water again, always show as pending regardless of the task's saved state
+            wateringTask.status = TaskStatus.PENDING;
+            wateringTask.completed = false;
+            wateringTask.completedAt = undefined;
+          }
+        }
+
         generatedTasks.push(wateringTask);
       }
 
@@ -103,7 +173,9 @@ export const useEnhancedTaskStore = create<TaskState>((set, get) => ({
 
       // Check if task was completed
       const completedTask = completedTaskMap.get(task.id);
-      if (completedTask) {
+      if (completedTask && task.status !== TaskStatus.PENDING) {
+        // Only apply completed status if the newly generated task isn't specifically marked as pending
+        // This is important for watering tasks that need to become pending again after the watering frequency has passed
         finalTasks.push({
           ...task,
           status: TaskStatus.COMPLETED,
@@ -165,7 +237,7 @@ export const useEnhancedTaskStore = create<TaskState>((set, get) => ({
         task.status === TaskStatus.COMPLETED &&
         !processedTaskIds.has(task.id)
       ) {
-        // Only add if we don't already have a more recent completed task of this type for this plant
+        // Only add if we don't already have a completed task of this type for this plant on the same day
         const existingCompleted = finalTasks.find(
           (t) =>
             t.plantId === task.plantId &&
@@ -173,7 +245,7 @@ export const useEnhancedTaskStore = create<TaskState>((set, get) => ({
             t.status === TaskStatus.COMPLETED &&
             t.completedAt &&
             task.completedAt &&
-            t.completedAt.toMillis() > task.completedAt.toMillis()
+            isSameDay(t.completedAt, task.completedAt)
         );
 
         if (!existingCompleted) {
@@ -183,44 +255,11 @@ export const useEnhancedTaskStore = create<TaskState>((set, get) => ({
       }
     });
 
-    // For each plant, ensure we don't have duplicate pending tasks of the same type
-    // (we want to keep only the most recent pending task per plant and type)
-    const plantTaskMap = new Map<string, Map<TaskType, Task>>();
+    // Final deduplication - ensure we don't have multiple completed tasks
+    // of the same type on the same day
+    const deduplicatedTasks = deduplicateCompletedTasks(finalTasks);
 
-    // First, collect all pending tasks by plant and type
-    finalTasks.forEach((task) => {
-      if (task.status === TaskStatus.PENDING) {
-        if (!plantTaskMap.has(task.plantId)) {
-          plantTaskMap.set(task.plantId, new Map<TaskType, Task>());
-        }
-
-        const plantTasks = plantTaskMap.get(task.plantId)!;
-        if (
-          !plantTasks.has(task.taskType) ||
-          plantTasks.get(task.taskType)!.dueDate.toMillis() <
-            task.dueDate.toMillis()
-        ) {
-          plantTasks.set(task.taskType, task);
-        }
-      }
-    });
-
-    // Create a filtered list with only the latest pending task per plant and type
-    const filteredTasks = finalTasks.filter((task) => {
-      if (task.status === TaskStatus.COMPLETED) {
-        return true; // Keep all completed tasks
-      }
-
-      // For pending tasks, check if it's the latest one
-      const plantTasks = plantTaskMap.get(task.plantId);
-      if (plantTasks && plantTasks.get(task.taskType) === task) {
-        return true;
-      }
-
-      return false;
-    });
-
-    set({ tasks: filteredTasks, isLoading: false });
+    set({ tasks: deduplicatedTasks, isLoading: false });
   },
 
   isTaskCompletable: (task: Task): boolean => {
@@ -271,18 +310,39 @@ export const useEnhancedTaskStore = create<TaskState>((set, get) => ({
 
     // For completed tasks
     if (task.status === TaskStatus.COMPLETED) {
-      return {
-        status: task.taskType === TaskType.WATERING ? "Watered" : "Repotted",
-        color: "#4CAF50", // Green
-        isCompletable: false,
-      };
+      // Special handling for watering tasks
+      if (task.taskType === TaskType.WATERING) {
+        // If it's a completed watering task but the due date has passed,
+        // show it as "Needs water" instead of "Watered"
+        if (diffInDays < 0) {
+          return {
+            status: "Needs water",
+            color: "#D32F2F", // Red
+            isCompletable: isCompletable,
+          };
+        } else {
+          return {
+            status: "Watered",
+            color: "#4CAF50", // Green
+            isCompletable: false,
+          };
+        }
+      } else {
+        // For other completed tasks (like repotting)
+        return {
+          status:
+            task.taskType === TaskType.REPOTTING ? "Repotted" : "Completed",
+          color: "#4CAF50", // Green
+          isCompletable: false,
+        };
+      }
     }
 
     // For pending tasks
     if (task.taskType === TaskType.WATERING) {
       if (diffInDays < 0) {
         return {
-          status: "Overdue",
+          status: "Needs water",
           color: "#D32F2F", // Red
           isCompletable: isCompletable,
         };
