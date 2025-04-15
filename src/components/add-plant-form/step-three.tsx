@@ -4,7 +4,6 @@ import {
   StepContainer,
   FormGroup,
   StyledLabel,
-  StyledInput,
   StyledSelect,
   StepTitle,
   StyledTextarea,
@@ -17,15 +16,20 @@ import {
   getDefaultPlantImageURL,
   RepottingTimeOption,
   getRepottingDateFromOption,
-  getTodayForDateInput,
   getMonthsDifference,
 } from "./helpers";
-import {
-  formatTimestampForDateInput,
-  dateStringToTimestamp,
-} from "@/utils/timestamp-utils";
 import { theme } from "@/styles/theme";
 import { AcquiredTimeOption } from "./step-one";
+
+// Define watering time options
+enum LastWateredOption {
+  TODAY = "today",
+  YESTERDAY = "yesterday",
+  TWO_DAYS_AGO = "two_days_ago",
+  THREE_DAYS_AGO = "three_days_ago",
+  SEVEN_DAYS_AGO = "seven_days_ago",
+  DONT_REMEMBER = "dont_remember",
+}
 
 interface StepThreeProps {
   formData: Partial<Plant>;
@@ -33,12 +37,83 @@ interface StepThreeProps {
 }
 
 const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
-  const handleLastWateredChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle last watered date selection
+  const handleLastWateredChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const option = e.target.value as LastWateredOption;
+    const now = new Date();
+    let lastWateredDate: Date;
+
+    switch (option) {
+      case LastWateredOption.TODAY:
+        lastWateredDate = now;
+        break;
+      case LastWateredOption.YESTERDAY:
+        lastWateredDate = new Date(now);
+        lastWateredDate.setDate(now.getDate() - 1);
+        break;
+      case LastWateredOption.TWO_DAYS_AGO:
+        lastWateredDate = new Date(now);
+        lastWateredDate.setDate(now.getDate() - 2);
+        break;
+      case LastWateredOption.THREE_DAYS_AGO:
+        lastWateredDate = new Date(now);
+        lastWateredDate.setDate(now.getDate() - 3);
+        break;
+      case LastWateredOption.SEVEN_DAYS_AGO:
+        lastWateredDate = new Date(now);
+        lastWateredDate.setDate(now.getDate() - 7);
+        break;
+      case LastWateredOption.DONT_REMEMBER:
+        lastWateredDate = new Date(now);
+        lastWateredDate.setDate(now.getDate() - 14);
+        break;
+      default:
+        lastWateredDate = now;
+    }
+
     updateFormData({
-      lastWatered: e.target.value
-        ? dateStringToTimestamp(e.target.value)
-        : undefined,
+      lastWatered: Timestamp.fromDate(lastWateredDate),
     });
+  };
+
+  // Get the selected last watered option based on the timestamp
+  const getSelectedLastWateredOption = (): LastWateredOption => {
+    if (!formData.lastWatered) return LastWateredOption.DONT_REMEMBER;
+
+    const lastWateredDate = formData.lastWatered.toDate();
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - lastWateredDate.getTime());
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    // Check if it's today (same day)
+    if (
+      lastWateredDate.getDate() === now.getDate() &&
+      lastWateredDate.getMonth() === now.getMonth() &&
+      lastWateredDate.getFullYear() === now.getFullYear()
+    ) {
+      return LastWateredOption.TODAY;
+    }
+
+    // Check other options
+    switch (diffDays) {
+      case 1:
+        return LastWateredOption.YESTERDAY;
+      case 2:
+        return LastWateredOption.TWO_DAYS_AGO;
+      case 3:
+        return LastWateredOption.THREE_DAYS_AGO;
+      case 7:
+        return LastWateredOption.SEVEN_DAYS_AGO;
+      default:
+        if (diffDays > 10) {
+          return LastWateredOption.DONT_REMEMBER;
+        }
+        // Find the closest option
+        if (diffDays < 2) return LastWateredOption.YESTERDAY;
+        if (diffDays < 3) return LastWateredOption.TWO_DAYS_AGO;
+        if (diffDays < 5) return LastWateredOption.THREE_DAYS_AGO;
+        return LastWateredOption.SEVEN_DAYS_AGO;
+    }
   };
 
   const handleSoilTypeChange = (type: SoilType, checked: boolean) => {
@@ -81,9 +156,6 @@ const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
     });
   };
 
-  // Get today's date for input max attribute
-  const today = getTodayForDateInput();
-
   // Find the closest repotting option based on lastRepotted date, for the dropdown default value
   const getSelectedRepottingOption = (): RepottingTimeOption => {
     if (!formData.lastRepotted) return RepottingTimeOption.NEVER;
@@ -100,6 +172,7 @@ const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
   };
 
   const selectedRepottingOption = getSelectedRepottingOption();
+  const selectedLastWateredOption = getSelectedLastWateredOption();
 
   // Check if the plant was just bought
   const isNewlyBought =
@@ -113,31 +186,41 @@ const StepThree: React.FC<StepThreeProps> = ({ formData, updateFormData }) => {
         <StyledLabel htmlFor="wateringFrequency">
           How often should this plant be watered? (days)
         </StyledLabel>
-        <StyledInput
+        <StyledSelect
           id="wateringFrequency"
-          type="number"
-          min="1"
-          max="90"
-          value={formData.wateringFrequency || 2}
+          value={formData.wateringFrequency || 7}
           onChange={(e) =>
             updateFormData({
               wateringFrequency: parseInt(e.target.value),
             })
           }
-        />
+        >
+          {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => (
+            <option key={day} value={day}>
+              {day === 1 ? "Every day" : `Every ${day} days`}
+            </option>
+          ))}
+        </StyledSelect>
       </FormGroup>
 
       <FormGroup>
         <StyledLabel htmlFor="lastWatered">
           When did you last water this plant?
         </StyledLabel>
-        <StyledInput
+        <StyledSelect
           id="lastWatered"
-          type="date"
-          max={today}
-          value={formatTimestampForDateInput(formData.lastWatered)}
+          value={selectedLastWateredOption}
           onChange={handleLastWateredChange}
-        />
+        >
+          <option value={LastWateredOption.TODAY}>Today</option>
+          <option value={LastWateredOption.YESTERDAY}>Yesterday</option>
+          <option value={LastWateredOption.TWO_DAYS_AGO}>2 days ago</option>
+          <option value={LastWateredOption.THREE_DAYS_AGO}>3 days ago</option>
+          <option value={LastWateredOption.SEVEN_DAYS_AGO}>7 days ago</option>
+          <option value={LastWateredOption.DONT_REMEMBER}>
+            {`I don't remember`}
+          </option>
+        </StyledSelect>
       </FormGroup>
 
       <FormGroup>
