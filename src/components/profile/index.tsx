@@ -9,12 +9,14 @@ import { usePlantStore } from "@/store/plant-store";
 import { LoadingSpinner } from "@/components/spinner";
 import * as S from "./index.sc";
 import Spacer from "@/components/utils/spacer/spacer";
+import SignUpModal from "../sign-up-modal";
 
 const ProfileComponent: React.FC = () => {
   const { user, signOut } = useAuthStore();
   const { plants } = usePlantStore();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showSignUpModal, setShowSignUpModal] = useState(false);
 
   const handleLogoutClick = () => {
     setShowConfirmation(true);
@@ -36,9 +38,19 @@ const ProfileComponent: React.FC = () => {
     setShowConfirmation(false);
   };
 
+  const handleSaveDataClick = () => {
+    setShowSignUpModal(true);
+  };
+
+  const handleCloseSignUpModal = () => {
+    setShowSignUpModal(false);
+  };
+
   if (!user) {
     return <LoadingSpinner size="large" />;
   }
+
+  const isGuestUser = user.isAnonymous;
 
   return (
     <S.ProfileContainer>
@@ -62,8 +74,8 @@ const ProfileComponent: React.FC = () => {
 
         <S.UserEmail>{user.email || "Anonymous User"}</S.UserEmail>
 
-        <S.UserBadge color={user.isAnonymous ? "#805AD5" : "#38A169"}>
-          {user.isAnonymous ? "Guest" : "Registered User"}
+        <S.UserBadge color={isGuestUser ? "#805AD5" : "#38A169"}>
+          {isGuestUser ? "Guest" : "Registered User"}
         </S.UserBadge>
       </S.ProfileHeader>
 
@@ -78,7 +90,7 @@ const ProfileComponent: React.FC = () => {
         <S.ProfileInfo>
           <S.ProfileLabel>Account Type</S.ProfileLabel>
           <S.ProfileValue>
-            {user.isAnonymous ? "Guest Account" : "Registered Account"}
+            {isGuestUser ? "Guest Account" : "Registered Account"}
           </S.ProfileValue>
         </S.ProfileInfo>
       </S.ProfileSection>
@@ -162,9 +174,15 @@ const ProfileComponent: React.FC = () => {
 
       <Spacer size={20} />
 
-      <S.LogoutButton onClick={handleLogoutClick} disabled={isLoggingOut}>
-        {isLoggingOut ? "Logging out..." : "Log Out"}
-      </S.LogoutButton>
+      {isGuestUser ? (
+        <S.SaveDataButton onClick={handleSaveDataClick}>
+          Save Your Data
+        </S.SaveDataButton>
+      ) : (
+        <S.LogoutButton onClick={handleLogoutClick} disabled={isLoggingOut}>
+          {isLoggingOut ? "Logging out..." : "Log Out"}
+        </S.LogoutButton>
+      )}
 
       {showConfirmation && (
         <S.ConfirmationOverlay>
@@ -185,6 +203,8 @@ const ProfileComponent: React.FC = () => {
           </S.ConfirmationDialog>
         </S.ConfirmationOverlay>
       )}
+
+      {showSignUpModal && <SignUpModal onClose={handleCloseSignUpModal} />}
     </S.ProfileContainer>
   );
 };

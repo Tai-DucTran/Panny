@@ -136,7 +136,7 @@ export const StatLabel = styled.div`
 export const LogoutButton = styled.button`
   width: 100%;
   padding: 0.9rem;
-  background-color: ${theme.colors.palette.bigFootFeet};
+  background-color: #e53e3e;
   color: white;
   border: none;
   border-radius: 8px;
@@ -155,6 +155,28 @@ export const LogoutButton = styled.button`
   &:disabled {
     background-color: #feb2b2;
     cursor: not-allowed;
+  }
+`;
+
+// New SaveDataButton for guest users
+export const SaveDataButton = styled.button`
+  width: 100%;
+  padding: 0.9rem;
+  background-color: ${theme.colors.palette.russianGreen};
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  &:hover {
+    background-color: ${theme.colors.palette.axolotl};
+    transform: translateY(-2px);
   }
 `;
 
