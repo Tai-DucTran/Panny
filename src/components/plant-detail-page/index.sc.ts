@@ -88,9 +88,6 @@ export const DetailsList = styled.div`
 export const DetailItem = styled.div`
   display: flex;
   align-items: center;
-  padding: 0.5rem;
-  background-color: #f5f5f5;
-  border-radius: 4px;
 `;
 
 export const DetailItemLabel = styled.span`
